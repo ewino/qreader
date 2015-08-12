@@ -6,7 +6,9 @@ class QRDecoder(object):
         pass
 
     def get_first(self):
-        pass
+        for item in self:
+            return item
+        return None
 
     def __iter__(self):
         yield None

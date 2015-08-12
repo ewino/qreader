@@ -13,7 +13,6 @@ def range_overlap(a_min, a_max, b_min, b_max):
 
 
 # taken from qrcode package
-
 def get_mask_func(mask_id):
     """
     Return the mask function for the given mask pattern.

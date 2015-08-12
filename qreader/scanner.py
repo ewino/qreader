@@ -4,8 +4,6 @@ from qreader.utils import is_overlapping, get_mask_func
 
 __author__ = 'ewino'
 
-from PIL import Image
-
 
 FORMAT_MASK = 0b101010000010010
 
@@ -117,7 +115,7 @@ class Scanner(object):
         info = QRCodeInfo()
         info.canvas = self.get_image_borders()
         info.block_size = self.get_block_size(info.canvas[:2])
-        info.size = int(self.image.width / info.block_size[0])
+        info.size = int((info.canvas[2] - (info.canvas[0]) + 1) / info.block_size[0])
         info.version = (info.size - 17) // 4
         self.info = info
         self._read_format_info()
@@ -163,16 +161,9 @@ class Scanner(object):
         alignment_positions = list([(x, x) for x in ALIGNMENT_POSITIONS[self.info.version - 1]]) + list(permutations(ALIGNMENT_POSITIONS[self.info.version - 1], 2))
         for pos_x, pos_y in alignment_positions:
             alignment_zone = (pos_x - 2, pos_y - 2, pos_x + 2, pos_y + 2)
-            if not self._is_in_zone(alignment_zone, zones):
+            if all(not is_overlapping(alignment_zone, dead_zone) for dead_zone in zones):
                 alignments_zones.append(alignment_zone)
         return zones + alignments_zones
-
-    def _is_in_zone(self, point_or_zone, zones):
-        if len(point_or_zone) == 2:
-            point_or_zone *= 2
-        for zone in zones:
-            if is_overlapping(point_or_zone, zone):
-                return True
 
     def _read_format_info(self):
         source_1 = (self._get_straight_bits((8, -7), 7, 'd') << 7) + self._get_straight_bits((-1, 8), 8, 'l')
@@ -235,9 +226,3 @@ class QRCodeInfo(object):
 
     def __str__(self):
         return '<version %s, size %s, ec %s, mask %s>' % (self.version, self.size, self.error_correction_level, self.mask_id)
-
-
-if __name__ == '__main__':
-    image = Image.open('../tests/resources/Qr-0.png')
-    scanner = Scanner(image)
-    print(len(list(scanner)))
