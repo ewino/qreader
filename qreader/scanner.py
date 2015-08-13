@@ -72,6 +72,22 @@ class Scanner(object):
         self._scan_direction = 'u'
         self._odd_col_modifier = False
 
+    def get_bits(self, amount):
+        bits = []
+        for bit in self:
+            bits.append(bit)
+            if len(bits) == amount:
+                break
+        return bits
+
+    def get_int(self, amount_of_bits):
+        val = 0
+        bits = self.get_bits(amount_of_bits)
+        for bit in bits:
+            val = (val << 1) + int(bit)
+        print(bits, val)
+        return val
+
     def apply_mask(self, dead_zones):
         mask = {}
         mask_func = get_mask_func(self.info.mask_id)
