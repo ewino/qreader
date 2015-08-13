@@ -17,20 +17,16 @@ def get_mask_func(mask_id):
     """
     Return the mask function for the given mask pattern.
     """
-    if mask_id == 0:   # 000
-        return lambda i, j: (i + j) % 2 == 0
-    if mask_id == 1:   # 001
-        return lambda i, j: i % 2 == 0
-    if mask_id == 2:   # 010
-        return lambda i, j: j % 3 == 0
-    if mask_id == 3:   # 011
-        return lambda i, j: (i + j) % 3 == 0
-    if mask_id == 4:   # 100
-        return lambda i, j: (i // 2 + j // 3) % 2 == 0
-    if mask_id == 5:  # 101
-        return lambda i, j: (i * j) % 2 + (i * j) % 3 == 0
-    if mask_id == 6:  # 110
-        return lambda i, j: ((i * j) % 2 + (i * j) % 3) % 2 == 0
-    if mask_id == 7:  # 111
-        return lambda i, j: ((i * j) % 3 + (i + j) % 2) % 2 == 0
+    id_to_mask = {
+        0: lambda i, j: (i + j) % 2 == 0,  # 000
+        1: lambda i, j: i % 2 == 0,  # 001
+        2: lambda i, j: j % 3 == 0,  # 010
+        3: lambda i, j: (i + j) % 3 == 0,  # 011
+        4: lambda i, j: (i // 2 + j // 3) % 2 == 0,  # 100
+        5: lambda i, j: (i * j) % 2 + (i * j) % 3 == 0,  # 101
+        6: lambda i, j: ((i * j) % 2 + (i * j) % 3) % 2 == 0,  # 110
+        7: lambda i, j: ((i * j) % 3 + (i + j) % 2) % 2 == 0,  # 111
+    }
+    if mask_id in id_to_mask:
+        return id_to_mask[mask_id]
     raise TypeError("Bad mask pattern: " + mask_id)
