@@ -85,7 +85,6 @@ class Scanner(object):
         bits = self.read_bits(amount_of_bits)
         for bit in bits:
             val = (val << 1) + int(bit)
-        print(bits, val)
         return val
 
     def apply_mask(self, dead_zones):
