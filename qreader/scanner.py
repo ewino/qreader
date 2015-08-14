@@ -72,17 +72,17 @@ class Scanner(object):
         self._scan_direction = 'u'
         self._odd_col_modifier = False
 
-    def get_bits(self, amount):
-        bits = []
-        for bit in self:
-            bits.append(bit)
-            if len(bits) == amount:
-                break
-        return bits
+    def read_bits(self, amount):
+        return [self.read_bit() for _ in range(amount)]
+
+    def read_bit(self):
+        bit = self._get_bit(self._next_pos) * self.mask[self._next_pos]
+        self._next_pos = self._get_next_pos(self._next_pos)
+        return bit
 
     def get_int(self, amount_of_bits):
         val = 0
-        bits = self.get_bits(amount_of_bits)
+        bits = self.read_bits(amount_of_bits)
         for bit in bits:
             val = (val << 1) + int(bit)
         print(bits, val)
@@ -93,7 +93,7 @@ class Scanner(object):
         mask_func = get_mask_func(self.info.mask_id)
         for x in range(self.info.size):
             for y in range(self.info.size):
-                mask[x, y] = 1 if mask_func(y, x) else 0
+                mask[x, y] = 1 if mask_func(y + 1, x + 1) else 0
         for zone in dead_zones:
             for x in range(zone[0], zone[2] + 1):
                 for y in range(zone[1], zone[3] + 1):
@@ -101,10 +101,8 @@ class Scanner(object):
         return mask
 
     def __iter__(self):
-        self.reset()
         while self._next_pos[0] >= 0 and self._next_pos[1] >= 0:
-            yield self._get_bit(self._next_pos) * self.mask[self._next_pos]
-            self._next_pos = self._get_next_pos(self._next_pos)
+            yield self.read_bit()
 
     def _get_next_pos(self, current):
         pos = current
@@ -182,11 +180,11 @@ class Scanner(object):
         return zones + alignments_zones
 
     def _read_format_info(self):
-        source_1 = (self._get_straight_bits((8, -7), 7, 'd') << 7) + self._get_straight_bits((-1, 8), 8, 'l')
-        source_2 = (self._get_straight_bits((7, 8), 8, 'l', (1,)) << 7) + self._get_straight_bits((8, 0), 9, 'd', (6,))
+        source_1 = (self._get_straight_bits((8, -7), 7, 'd') << 8) + self._get_straight_bits((-1, 8), 8, 'l')
+        source_2 = (self._get_straight_bits((7, 8), 8, 'l', (1,)) << 8) + self._get_straight_bits((8, 0), 9, 'd', (6,))
         assert source_1 == source_2, 'discrepancy in format info'
         format_info = source_1 ^ FORMAT_MASK
-        self.info.error_correction_level = (format_info >> 11) & 0b11
+        self.info.error_correction_level = (format_info >> 13) & 0b11
         self.info.mask_id = (format_info >> 10) & 0b111
 
     def _get_bit(self, coords):
