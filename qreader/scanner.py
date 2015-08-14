@@ -76,7 +76,7 @@ class Scanner(object):
         return [self.read_bit() for _ in range(amount)]
 
     def read_bit(self):
-        bit = self._get_bit(self._next_pos) * self.mask[self._next_pos]
+        bit = self._get_bit(self._next_pos) ^ self.mask[self._next_pos]
         self._next_pos = self._get_next_pos(self._next_pos)
         return bit
 
@@ -93,7 +93,7 @@ class Scanner(object):
         mask_func = get_mask_func(self.info.mask_id)
         for x in range(self.info.size):
             for y in range(self.info.size):
-                mask[x, y] = 1 if mask_func(y + 1, x + 1) else 0
+                mask[x, y] = 1 if mask_func(y, x) else 0
         for zone in dead_zones:
             for x in range(zone[0], zone[2] + 1):
                 for y in range(zone[1], zone[3] + 1):
