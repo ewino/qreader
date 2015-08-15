@@ -10,7 +10,8 @@ __author__ = 'ewino'
 class TextFileScanner(Scanner):
 
     def __init__(self, filepath, version):
-        self.data = open(filepath, 'r').read()
+        with open(filepath, 'r') as f:
+            self.data = f.read()
         self.info = QRCodeInfo()
         self.info.version = version
         self.position = 0
