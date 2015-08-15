@@ -12,8 +12,8 @@ __author__ = 'ewino'
 # noinspection PyMissingConstructor
 class TextFileScanner(Scanner):
 
-    def __init__(self, filepath, version):
-        with open(filepath, 'r') as f:
+    def __init__(self, file_path, version):
+        with open(file_path, 'r') as f:
             self.data = f.read()
         self.info = QRCodeInfo()
         self.info.version = version
@@ -42,19 +42,20 @@ class TestDecoder(TestCase):
         return MockDecoder(self._get_res_path(filename), version)
 
     def test_numeric(self):
-        self.assertEqual(self._get_decoder('nums-H.txt', 2).get_first(), 1112223330020159990)
-        self.assertEqual(self._get_decoder('Numeric-Mod-2-M.txt', 5).get_first(), 55)
+        self.assertEqual(1112223330020159990, self._get_decoder('nums-H.txt', 2).get_first())
+        self.assertEqual(55, self._get_decoder('Numeric-Mod-2-M.txt', 5).get_first())
 
     def test_alphanumeric(self):
-        self.assertEqual(self._get_decoder('HELLOW-H.txt', 2).get_first(), 'HELLO WORLD')
+        self.assertEqual('HELLO WORLD', self._get_decoder('HELLOW-H.txt', 2).get_first())
+        self.assertEqual('http://google.co.tz', self._get_decoder('URL-M.txt', 2).get_first())
 
     def test_bytes(self):
-        self.assertEqual(self._get_decoder('Pi-L.txt', 2).get_first(), 'pi=3.14159265358979')
-        self.assertEqual(self._get_decoder('Version2-H.txt', 2).get_first(), 'Version 2')
-        self.assertEqual(self._get_decoder('Latin-L.txt', 3).get_first(), u'û ü ý þ')
+        self.assertEqual('pi=3.14159265358979', self._get_decoder('Pi-L.txt', 2).get_first())
+        self.assertEqual('Version 2', self._get_decoder('Version2-H.txt', 2).get_first())
+        self.assertEqual(u'û ü ý þ', self._get_decoder('Latin-L.txt', 3).get_first())
 
     def test_kanji(self):
-        self.assertEqual(self._get_decoder('shintaka-Q.txt', 1).get_first(), u'新高')
+        self.assertEqual(u'新高', self._get_decoder('shintaka-Q.txt', 1).get_first())
 
     def test_eci(self):
         self.assertRaises(NotImplementedError, lambda: self._get_decoder('shintaka-Q.txt', 1)._decode_message(MODE_ECI))
@@ -70,4 +71,4 @@ class TestDecoder(TestCase):
             messages2.append(message)
         self.assertEqual(messages, messages2)
         self.assertEqual(1, len(messages))
-        self.assertEqual(messages[0], 'HELLO WORLD')
+        self.assertEqual('HELLO WORLD', messages[0])

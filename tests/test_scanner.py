@@ -38,6 +38,7 @@ class TestScanner(TestCase):
 
     def test_jpg(self):
         self._assert_info('Qr-3-Latin-L.jpg', 3, ERROR_CORRECT_L, 4)
+        self._assert_info('Qr-2-URL.jpg', 2, ERROR_CORRECT_L, 2)
 
     def test_gif(self):
         self._assert_info('Qr-3-Numeric-Mod-2-M.gif', 3, ERROR_CORRECT_M, 4)
