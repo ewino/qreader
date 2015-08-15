@@ -38,15 +38,15 @@ class TestDecoder(TestCase):
         return MockDecoder(self._get_res_path(filename), version)
 
     def test_numeric(self):
-        decoder = self._get_decoder('Pi-L.txt', 2)
         # decoder = QRDecoder(Image.open(self._get_res_path('Qr-2-alphanumeric.png')))
-        self.assertEqual(self._get_decoder('nums-H.txt', 2).get_first(), '1112223330020159990')
+        self.assertEqual(self._get_decoder('nums-H.txt', 2).get_first(), 1112223330020159990)
 
     def test_alphanumeric(self):
         self.assertEqual(self._get_decoder('HELLOW-H.txt', 2).get_first(), 'HELLO WORLD')
 
     def test_bytes(self):
         self.assertEqual(self._get_decoder('Pi-L.txt', 2).get_first(), 'pi=3.14159265358979')
+        self.assertEqual(self._get_decoder('Version2-H.txt', 2).get_first(), 'Version 2')
 
     # def test_kanji(self):
     #     self.assertEqual(self._get_decoder('shintaka-Q.txt', 1).get_first(), '新高')
