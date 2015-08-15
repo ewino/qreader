@@ -1,7 +1,7 @@
 # encoding=utf-8
 
 import os
-from unittest2 import TestCase
+from unittest import TestCase
 from qreader.decoder import QRDecoder
 from qreader.scanner import Scanner, QRCodeInfo
 
