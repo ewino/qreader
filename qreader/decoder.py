@@ -1,6 +1,6 @@
 from qreader.constants import MODE_NUMBER, MODE_ALPHA_NUM, ALPHANUM_CHARS, MODE_BYTES, MODE_KANJI
 from qreader.scanner import Scanner
-from qreader.utils import bits_for_length
+from qreader.utils import bits_for_length, ints_to_bytes
 
 __author__ = 'ewino'
 
@@ -67,7 +67,7 @@ class QRDecoder(object):
 
     def _decode_bytes_message(self):
         char_count = self.scanner.get_int(bits_for_length(self.version, MODE_BYTES))
-        raw = bytes(self.scanner.get_int(8) for _ in range(char_count))
+        raw = ints_to_bytes(self.scanner.get_int(8) for _ in range(char_count))
         try:
             return raw.decode('utf-8')
         except UnicodeDecodeError:
@@ -81,4 +81,4 @@ class QRDecoder(object):
             num = ((mashed // 0xC0) << 8) + mashed % 0xC0
             num += 0x8140 if num < 0x1F00 else 0xC140
             nums.extend(divmod(num, 2 ** 8))
-        return bytes(nums).decode('shift-jis')
+        return ints_to_bytes(nums).decode('shift-jis')

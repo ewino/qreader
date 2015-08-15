@@ -1,3 +1,5 @@
+# encoding=utf-8
+
 import os
 from unittest import TestCase
 from qreader.decoder import QRDecoder
@@ -50,4 +52,4 @@ class TestDecoder(TestCase):
         self.assertEqual(self._get_decoder('Version2-H.txt', 2).get_first(), 'Version 2')
 
     def test_kanji(self):
-        self.assertEqual(self._get_decoder('shintaka-Q.txt', 1).get_first(), '新高')
+        self.assertEqual(self._get_decoder('shintaka-Q.txt', 1).get_first(), u'新高')

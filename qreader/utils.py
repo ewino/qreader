@@ -1,5 +1,6 @@
 from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_LARGE
 from qreader.constants import MODE_SIZE_MEDIUM
+import six
 
 __author__ = 'ewino'
 
@@ -52,3 +53,10 @@ def bits_for_length(version, data_mode):
         raise TypeError("Unknown data type ID: %s" % (data_mode,))
 
     return size_mode[data_mode]
+
+
+def ints_to_bytes(ints):
+    if six.PY3:
+        return bytes(ints)
+    else:
+        return ''.join(chr(x) for x in ints)
