@@ -1,5 +1,5 @@
 import os
-from unittest import TestCase
+from unittest2 import TestCase
 from PIL import Image
 from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_H, ERROR_CORRECT_Q
 from qreader.scanner import Scanner
