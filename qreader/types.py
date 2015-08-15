@@ -1,6 +1,7 @@
 from datetime import datetime
 import re
 import dateutil.parser
+import six
 
 __author__ = 'ewino'
 
@@ -90,7 +91,7 @@ class vCard(object):
                     val = dateutil.parser.parse(val)
                 elif tpe == list:
                     val = val.split(',')
-            if isinstance(val, str) and ';' in val:
+            if isinstance(val, six.string_types) and ';' in val:
                 val = tuple(val.split(';'))
 
             if isinstance(getattr(card, field), list):
