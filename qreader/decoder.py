@@ -76,5 +76,10 @@ class QRDecoder(object):
 
     def _decode_kanji_message(self):
         char_count = self.scanner.get_int(bits_for_length(self.version, MODE_KANJI))
-        print('Looks like a %s chars Kanji value' % (char_count,))
-        raise NotImplementedError('Kanji encoding not implemented yet')
+        nums = []
+        for _ in range(char_count):
+            mashed = self.scanner.get_int(13)
+            num = ((mashed // 0xC0) << 8) + mashed % 0xC0
+            num += 0x8140 if num < 0x1F00 else 0xC140
+            nums.extend(divmod(num, 2 ** 8))
+        return bytes(nums).decode('shift-jis')
