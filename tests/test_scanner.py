@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 from PIL import Image
-from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_H
+from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_H, ERROR_CORRECT_Q
 from qreader.scanner import Scanner
 
 __author__ = 'ewino'
@@ -30,6 +30,7 @@ class TestScanner(TestCase):
 
         _assert_info('Qr-1-noborder.png', 1, ERROR_CORRECT_H, 1)
         _assert_info('Qr-1.png', 1, ERROR_CORRECT_H, 1)
+        _assert_info('Qr-1-kanji.png', 1, ERROR_CORRECT_Q, 2)
         _assert_info('Qr-2-noborder.png', 2, ERROR_CORRECT_L, 2)
         _assert_info('Qr-2.png', 2, ERROR_CORRECT_H, 2)
         _assert_info('Qr-2-numeric.png', 2, ERROR_CORRECT_H, 4)
