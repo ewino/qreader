@@ -32,6 +32,8 @@ class TestScanner(TestCase):
         _assert_info('Qr-1.png', 1, ERROR_CORRECT_H, 1)
         _assert_info('Qr-2-noborder.png', 2, ERROR_CORRECT_L, 2)
         _assert_info('Qr-2.png', 2, ERROR_CORRECT_H, 2)
+        _assert_info('Qr-2-numeric.png', 2, ERROR_CORRECT_H, 4)
+        _assert_info('Qr-2-alphanumeric.png', 2, ERROR_CORRECT_H, 5)
 
     def test_size(self):
         self.assertEqual(209, len(list(self._get_res_scanner('Qr-1-noborder.png'))))

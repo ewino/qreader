@@ -1,3 +1,6 @@
+from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_LARGE
+from qreader.constants import MODE_SIZE_MEDIUM
+
 __author__ = 'ewino'
 
 
@@ -30,3 +33,22 @@ def get_mask_func(mask_id):
     if mask_id in id_to_mask:
         return id_to_mask[mask_id]
     raise TypeError("Bad mask pattern: " + mask_id)
+
+
+def mode_sizes_for_version(version):
+    if 0 < version < 10:
+        return MODE_SIZE_SMALL
+    elif version < 27:
+        return MODE_SIZE_MEDIUM
+    elif version <= 40:
+        return MODE_SIZE_LARGE
+    raise ValueError('Unknown QR version: %s' % (version,))
+
+
+def bits_for_length(version, data_mode):
+    size_mode = mode_sizes_for_version(version)
+
+    if data_mode not in size_mode:
+        raise TypeError("Unknown data type ID: %s" % (data_mode,))
+
+    return size_mode[data_mode]
