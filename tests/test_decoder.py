@@ -2,6 +2,7 @@
 
 import os
 from unittest import TestCase
+from qreader.constants import MODE_ECI, MODE_STRUCTURED_APPEND
 from qreader.decoder import QRDecoder
 from qreader.scanner import Scanner, QRCodeInfo
 
@@ -41,8 +42,8 @@ class TestDecoder(TestCase):
         return MockDecoder(self._get_res_path(filename), version)
 
     def test_numeric(self):
-        # decoder = QRDecoder(Image.open(self._get_res_path('Qr-2-alphanumeric.png')))
         self.assertEqual(self._get_decoder('nums-H.txt', 2).get_first(), 1112223330020159990)
+        self.assertEqual(self._get_decoder('Numeric-Mod-2-M.txt', 5).get_first(), 55)
 
     def test_alphanumeric(self):
         self.assertEqual(self._get_decoder('HELLOW-H.txt', 2).get_first(), 'HELLO WORLD')
@@ -50,6 +51,23 @@ class TestDecoder(TestCase):
     def test_bytes(self):
         self.assertEqual(self._get_decoder('Pi-L.txt', 2).get_first(), 'pi=3.14159265358979')
         self.assertEqual(self._get_decoder('Version2-H.txt', 2).get_first(), 'Version 2')
+        self.assertEqual(self._get_decoder('Latin-L.txt', 3).get_first(), u'û ü ý þ')
 
     def test_kanji(self):
         self.assertEqual(self._get_decoder('shintaka-Q.txt', 1).get_first(), u'新高')
+
+    def test_eci(self):
+        self.assertRaises(NotImplementedError, lambda: self._get_decoder('shintaka-Q.txt', 1)._decode_message(MODE_ECI))
+
+    def test_multi(self):
+        self.assertRaises(NotImplementedError, lambda: self._get_decoder('shintaka-Q.txt', 1)
+                          ._decode_message(MODE_STRUCTURED_APPEND))
+
+    def test_iteration(self):
+        messages = self._get_decoder('HELLOW-H.txt', 2).get_all()
+        messages2 = []
+        for message in self._get_decoder('HELLOW-H.txt', 2):
+            messages2.append(message)
+        self.assertEqual(messages, messages2)
+        self.assertEqual(1, len(messages))
+        self.assertEqual(messages[0], 'HELLO WORLD')

@@ -1,7 +1,7 @@
 import os
 from unittest import TestCase
 from PIL import Image
-from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_H, ERROR_CORRECT_Q
+from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_H, ERROR_CORRECT_Q, ERROR_CORRECT_M
 from qreader.scanner import Scanner
 
 __author__ = 'ewino'
@@ -15,6 +15,12 @@ class TestScanner(TestCase):
     def _get_res_scanner(self, res_name):
         return Scanner(self._get_img_res(res_name))
 
+    def _assert_info(self, res_name, version, ec, mask):
+        info = self._get_res_scanner(res_name).info
+        self.assertEqual(version, info.version)
+        self.assertEqual(ec, info.error_correction_level)
+        self.assertEqual(mask, info.mask_id)
+
     def test_canvas_size(self):
         self.assertEqual((0, 0, 146, 146), self._get_res_scanner('Qr-1-noborder.png').info.canvas)
         self.assertEqual((0, 0, 199, 199), self._get_res_scanner('Qr-2-noborder.png').info.canvas)
@@ -22,19 +28,19 @@ class TestScanner(TestCase):
         self.assertEqual((35, 35, 184, 184), self._get_res_scanner('Qr-2.png').info.canvas)
 
     def test_info(self):
-        def _assert_info(res_name, version, ec, mask):
-            info = self._get_res_scanner(res_name).info
-            self.assertEqual(version, info.version)
-            self.assertEqual(ec, info.error_correction_level)
-            self.assertEqual(mask, info.mask_id)
+        self._assert_info('Qr-1-noborder.png', 1, ERROR_CORRECT_H, 1)
+        self._assert_info('Qr-1.png', 1, ERROR_CORRECT_H, 1)
+        self._assert_info('Qr-1-kanji.png', 1, ERROR_CORRECT_Q, 2)
+        self._assert_info('Qr-2-noborder.png', 2, ERROR_CORRECT_L, 2)
+        self._assert_info('Qr-2.png', 2, ERROR_CORRECT_H, 2)
+        self._assert_info('Qr-2-numeric.png', 2, ERROR_CORRECT_H, 4)
+        self._assert_info('Qr-2-alphanumeric.png', 2, ERROR_CORRECT_H, 5)
 
-        _assert_info('Qr-1-noborder.png', 1, ERROR_CORRECT_H, 1)
-        _assert_info('Qr-1.png', 1, ERROR_CORRECT_H, 1)
-        _assert_info('Qr-1-kanji.png', 1, ERROR_CORRECT_Q, 2)
-        _assert_info('Qr-2-noborder.png', 2, ERROR_CORRECT_L, 2)
-        _assert_info('Qr-2.png', 2, ERROR_CORRECT_H, 2)
-        _assert_info('Qr-2-numeric.png', 2, ERROR_CORRECT_H, 4)
-        _assert_info('Qr-2-alphanumeric.png', 2, ERROR_CORRECT_H, 5)
+    def test_jpg(self):
+        self._assert_info('Qr-3-Latin-L.jpg', 3, ERROR_CORRECT_L, 4)
+
+    def test_gif(self):
+        self._assert_info('Qr-3-Numeric-Mod-2-M.gif', 3, ERROR_CORRECT_M, 4)
 
     def test_size(self):
         self.assertEqual(209, len(list(self._get_res_scanner('Qr-1-noborder.png'))))

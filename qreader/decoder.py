@@ -1,4 +1,5 @@
-from qreader.constants import MODE_NUMBER, MODE_ALPHA_NUM, ALPHANUM_CHARS, MODE_BYTES, MODE_KANJI
+from qreader.constants import MODE_NUMBER, MODE_ALPHA_NUM, ALPHANUM_CHARS, MODE_BYTES, MODE_KANJI, MODE_ECI, \
+    MODE_STRUCTURED_APPEND
 from qreader.scanner import Scanner
 from qreader.utils import bits_for_length, ints_to_bytes
 
@@ -8,38 +9,41 @@ __author__ = 'ewino'
 class QRDecoder(object):
 
     def __init__(self, source):
-        self.scanner = Scanner(source)
+        self.scanner = Scanner(source)  # pragma: no cover
 
     @property
     def version(self):
         return self.scanner.info.version
 
     def get_first(self):
-        for item in self:
-            return item
-        return None
+        return self._decode_next_message()
 
     def __iter__(self):
         yield self._decode_next_message()
 
-    def _decode_next_message(self):
-        mode = self.scanner.get_int(4)
-        if mode == MODE_NUMBER:
-            return self._decode_numeric_message()
-        elif mode == MODE_ALPHA_NUM:
-            return self._decode_alpha_num_message()
-        elif mode == MODE_BYTES:
-            return self._decode_bytes_message()
-        elif mode == MODE_KANJI:
-            return self._decode_kanji_message()
-        elif mode == 3:
-            raise NotImplementedError('Structured append encoding not implemented yet')
-        elif mode == 7:
-            raise NotImplementedError('Extended Channel Interpretation encoding not implemented yet')
-        raise TypeError('Unknown mode number: %s' % mode)
-
     def get_all(self):
         return list(self)
+
+    def _decode_next_message(self):
+        mode = self.scanner.get_int(4)
+        return self._decode_message(mode)
+
+    def _decode_message(self, mode):
+        if mode == MODE_NUMBER:
+            message = self._decode_numeric_message()
+        elif mode == MODE_ALPHA_NUM:
+            message = self._decode_alpha_num_message()
+        elif mode == MODE_BYTES:
+            message = self._decode_bytes_message()
+        elif mode == MODE_KANJI:
+            message = self._decode_kanji_message()
+        elif mode == MODE_STRUCTURED_APPEND:
+            raise NotImplementedError('Structured append encoding not implemented yet')
+        elif mode == MODE_ECI:
+            raise NotImplementedError('Extended Channel Interpretation encoding not implemented yet')
+        else:  # pragma: no cover
+            raise TypeError('Unknown mode number: %s' % mode)
+        return message
 
     def _decode_numeric_message(self):
         char_count = self.scanner.get_int(bits_for_length(self.version, MODE_NUMBER))

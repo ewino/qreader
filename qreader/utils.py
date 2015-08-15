@@ -6,14 +6,14 @@ __author__ = 'ewino'
 
 
 def is_overlapping(rect1, rect2):
-    hoverlaps = range_overlap(rect1[0], rect1[2], rect2[0], rect2[2])
-    voverlaps = range_overlap(rect1[1], rect1[3], rect2[1], rect2[3])
-    return hoverlaps and voverlaps
+    h_overlaps = range_overlap((rect1[0], rect1[2]), (rect2[0], rect2[2]))
+    v_overlaps = range_overlap((rect1[1], rect1[3]), (rect2[1], rect2[3]))
+    return h_overlaps and v_overlaps
 
 
-def range_overlap(a_min, a_max, b_min, b_max):
+def range_overlap(a, b):
     """Neither range is completely greater than the other"""
-    return (a_min <= b_max) and (b_min <= a_max)
+    return (a[0] <= b[1]) and (b[0] <= a[1])
 
 
 # taken from qrcode package
@@ -37,11 +37,13 @@ def get_mask_func(mask_id):
 
 
 def mode_sizes_for_version(version):
-    if 0 < version < 10:
+    if version != int(version):
+        raise ValueError('QR version (%s) should be an integer' % (version,))
+    if 1 <= version <= 9:
         return MODE_SIZE_SMALL
-    elif version < 27:
+    elif 10 <= version <= 26:
         return MODE_SIZE_MEDIUM
-    elif version <= 40:
+    elif 27 <= version <= 40:
         return MODE_SIZE_LARGE
     raise ValueError('Unknown QR version: %s' % (version,))
 
