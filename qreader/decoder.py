@@ -44,8 +44,16 @@ class QRDecoder(object):
 
     def _decode_numeric_message(self):
         char_count = self.scanner.get_int(bits_for_length(self.version, MODE_NUMBER))
-        print('Looks like a %s chars numeric value' % (char_count,))
-        raise NotImplementedError('Numeric encoding not implemented yet')
+        val = 0
+        triples, rest = divmod(char_count, 3)
+        for _ in range(triples):
+            val = val * 1000 + self.scanner.get_int(10)
+        if rest == 2:
+            val = val * 100 + self.scanner.get_int(7)
+        elif rest == 1:
+            val = val * 10 + self.scanner.get_int(4)
+
+        return val
 
     def _decode_alpha_num_message(self):
         char_count = self.scanner.get_int(bits_for_length(self.version, MODE_ALPHA_NUM))
