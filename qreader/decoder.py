@@ -1,4 +1,3 @@
-from math import ceil
 from qreader.constants import MODE_NUMBER, MODE_ALPHA_NUM, ALPHANUM_CHARS, MODE_BYTES, MODE_KANJI
 from qreader.scanner import Scanner
 from qreader.utils import bits_for_length
