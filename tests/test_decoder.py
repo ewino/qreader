@@ -5,6 +5,7 @@ from unittest import TestCase
 from qreader.constants import MODE_ECI, MODE_STRUCTURED_APPEND
 from qreader.decoder import QRDecoder
 from qreader.scanner import Scanner, QRCodeInfo
+from qreader.types import vCard
 
 __author__ = 'ewino'
 
@@ -63,6 +64,12 @@ class TestDecoder(TestCase):
     def test_multi(self):
         self.assertRaises(NotImplementedError, lambda: self._get_decoder('shintaka-Q.txt', 1)
                           ._decode_message(MODE_STRUCTURED_APPEND))
+
+    def test_vcard(self):
+        card = self._get_decoder('vCard-L.txt', 3).get_first()
+        self.assertTrue(vCard, type(card))
+        self.assertEqual(('Blabla', 'Bla Bla'), card.name)
+        self.assertEqual(('CELL', '123456789'), card.phones[0])
 
     def test_iteration(self):
         messages = self._get_decoder('HELLOW-H.txt', 2).get_all()

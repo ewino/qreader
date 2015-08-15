@@ -1,6 +1,7 @@
 from qreader.constants import MODE_NUMBER, MODE_ALPHA_NUM, ALPHANUM_CHARS, MODE_BYTES, MODE_KANJI, MODE_ECI, \
     MODE_STRUCTURED_APPEND
 from qreader.scanner import Scanner
+from qreader.types import vCard
 from qreader.utils import bits_for_length, ints_to_bytes
 
 __author__ = 'ewino'
@@ -73,9 +74,12 @@ class QRDecoder(object):
         char_count = self.scanner.get_int(bits_for_length(self.version, MODE_BYTES))
         raw = ints_to_bytes(self.scanner.get_int(8) for _ in range(char_count))
         try:
-            return raw.decode('utf-8')
+            val = raw.decode('utf-8')
         except UnicodeDecodeError:
-            return raw.decode('iso-8859-1')
+            val = raw.decode('iso-8859-1')
+        if val.startswith('BEGIN:VCARD\n'):
+            return vCard.from_text(val)
+        return val
 
     def _decode_kanji_message(self):
         char_count = self.scanner.get_int(bits_for_length(self.version, MODE_KANJI))

@@ -35,6 +35,7 @@ class TestScanner(TestCase):
         self._assert_info('Qr-2.png', 2, ERROR_CORRECT_H, 2)
         self._assert_info('Qr-2-numeric.png', 2, ERROR_CORRECT_H, 4)
         self._assert_info('Qr-2-alphanumeric.png', 2, ERROR_CORRECT_H, 5)
+        self._assert_info('Qr-8-vCard-L.jpg', 8, ERROR_CORRECT_L, 3)
 
     def test_jpg(self):
         self._assert_info('Qr-3-Latin-L.jpg', 3, ERROR_CORRECT_L, 4)
