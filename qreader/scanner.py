@@ -1,57 +1,10 @@
-from _collections_abc import Iterable, Iterator
+from _collections_abc import Iterator
 from io import StringIO
-from itertools import permutations
+
 from qreader import tuples
-from qreader.utils import is_overlapping, get_mask_func
+from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones
 
 __author__ = 'ewino'
-
-
-FORMAT_MASK = 0b101010000010010
-
-
-ALIGNMENT_POSITIONS = [
-    [],
-    [6, 18],
-    [6, 22],
-    [6, 26],
-    [6, 30],
-    [6, 34],
-    [6, 22, 38],
-    [6, 24, 42],
-    [6, 26, 46],
-    [6, 28, 50],
-    [6, 30, 54],
-    [6, 32, 58],
-    [6, 34, 62],
-    [6, 26, 46, 66],
-    [6, 26, 48, 70],
-    [6, 26, 50, 74],
-    [6, 30, 54, 78],
-    [6, 30, 56, 82],
-    [6, 30, 58, 86],
-    [6, 34, 62, 90],
-    [6, 28, 50, 72, 94],
-    [6, 26, 50, 74, 98],
-    [6, 30, 54, 78, 102],
-    [6, 28, 54, 80, 106],
-    [6, 32, 58, 84, 110],
-    [6, 30, 58, 86, 114],
-    [6, 34, 62, 90, 118],
-    [6, 26, 50, 74, 98, 122],
-    [6, 30, 54, 78, 102, 126],
-    [6, 26, 52, 78, 104, 130],
-    [6, 30, 56, 82, 108, 134],
-    [6, 34, 60, 86, 112, 138],
-    [6, 30, 58, 86, 114, 142],
-    [6, 34, 62, 90, 118, 146],
-    [6, 30, 54, 78, 102, 126, 150],
-    [6, 24, 50, 76, 102, 128, 154],
-    [6, 28, 54, 80, 106, 132, 158],
-    [6, 32, 58, 84, 110, 136, 162],
-    [6, 26, 54, 82, 110, 138, 166],
-    [6, 30, 58, 86, 114, 142, 170]
-]
 
 
 class Scanner(object):
@@ -72,7 +25,7 @@ class Scanner(object):
         self._current_index = -1
 
     def _read_all_data(self):
-        pos_iterator = QrZigZagIterator(self.info.size, self.get_dead_zones())
+        pos_iterator = QrZigZagIterator(self.info.size, get_dead_zones(self.info.version))
         data = StringIO()
         for pos in iter(pos_iterator):
             data.write(str(self._get_bit(pos) ^ self.mask[pos]))
@@ -143,29 +96,11 @@ class Scanner(object):
             if self.image.getpixel(tuples.add(img_start, i)) > 128:
                 return i, i
 
-    def get_dead_zones(self):
-        size = self.info.size
-        zones = [
-            (0, 0, 8, 8),  # top left position
-            (size - 8, 0, size - 1, 8),  # top right position
-            (0, size - 8, 7, size - 1),  # bottom left position
-            (8, size - 7, 8, size - 1),  # bottom left format info
-            (8, 6, size - 9, 6),  # top timing array
-            (6, 8, 6, size - 9)  # left timing array
-        ]
-        alignments_zones = []
-        alignment_positions = list([(x, x) for x in ALIGNMENT_POSITIONS[self.info.version - 1]]) + list(permutations(ALIGNMENT_POSITIONS[self.info.version - 1], 2))
-        for pos_x, pos_y in alignment_positions:
-            alignment_zone = (pos_x - 2, pos_y - 2, pos_x + 2, pos_y + 2)
-            if all(not is_overlapping(alignment_zone, dead_zone) for dead_zone in zones):
-                alignments_zones.append(alignment_zone)
-        return zones + alignments_zones
-
     def _read_format_info(self):
         source_1 = (self._get_straight_bits((8, -7), 7, 'd') << 8) + self._get_straight_bits((-1, 8), 8, 'l')
         source_2 = (self._get_straight_bits((7, 8), 8, 'l', (1,)) << 8) + self._get_straight_bits((8, 0), 9, 'd', (6,))
         assert source_1 == source_2, 'discrepancy in format info'
-        format_info = source_1 ^ FORMAT_MASK
+        format_info = source_1 ^ FORMAT_INFO_MASK
         self.info.error_correction_level = (format_info >> 13) & 0b11
         self.info.mask_id = (format_info >> 10) & 0b111
 
