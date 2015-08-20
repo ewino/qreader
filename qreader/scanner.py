@@ -1,4 +1,4 @@
-from _collections_abc import Iterator
+from collections import Iterator
 from io import StringIO
 
 from qreader import tuples
