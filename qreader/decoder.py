@@ -27,7 +27,7 @@ class QRDecoder(object):
         return list(self)
 
     def _decode_next_message(self):
-        mode = self.scanner.get_int(4)
+        mode = self.scanner.read_int(4)
         return self._decode_message(mode)
 
     def _decode_message(self, mode):
@@ -48,32 +48,32 @@ class QRDecoder(object):
         return message
 
     def _decode_numeric_message(self):
-        char_count = self.scanner.get_int(bits_for_length(self.version, MODE_NUMBER))
+        char_count = self.scanner.read_int(bits_for_length(self.version, MODE_NUMBER))
         val = 0
         triples, rest = divmod(char_count, 3)
         for _ in range(triples):
-            val = val * 1000 + self.scanner.get_int(10)
+            val = val * 1000 + self.scanner.read_int(10)
         if rest == 2:
-            val = val * 100 + self.scanner.get_int(7)
+            val = val * 100 + self.scanner.read_int(7)
         elif rest == 1:
-            val = val * 10 + self.scanner.get_int(4)
+            val = val * 10 + self.scanner.read_int(4)
 
         return val
 
     def _decode_alpha_num_message(self):
-        char_count = self.scanner.get_int(bits_for_length(self.version, MODE_ALPHA_NUM))
+        char_count = self.scanner.read_int(bits_for_length(self.version, MODE_ALPHA_NUM))
         val = ''
         doubles, has_single = divmod(char_count, 2)
         for _ in range(doubles):
-            double = self.scanner.get_int(11)
+            double = self.scanner.read_int(11)
             val += ALPHANUM_CHARS[double // 45] + ALPHANUM_CHARS[double % 45]
         if has_single:
-            val += ALPHANUM_CHARS[self.scanner.get_int(6)]
+            val += ALPHANUM_CHARS[self.scanner.read_int(6)]
         return val
 
     def _decode_bytes_message(self):
-        char_count = self.scanner.get_int(bits_for_length(self.version, MODE_BYTES))
-        raw = ints_to_bytes(self.scanner.get_int(8) for _ in range(char_count))
+        char_count = self.scanner.read_int(bits_for_length(self.version, MODE_BYTES))
+        raw = ints_to_bytes(self.scanner.read_int(8) for _ in range(char_count))
         try:
             val = raw.decode('utf-8')
         except UnicodeDecodeError:
@@ -83,10 +83,10 @@ class QRDecoder(object):
         return val
 
     def _decode_kanji_message(self):
-        char_count = self.scanner.get_int(bits_for_length(self.version, MODE_KANJI))
+        char_count = self.scanner.read_int(bits_for_length(self.version, MODE_KANJI))
         nums = []
         for _ in range(char_count):
-            mashed = self.scanner.get_int(13)
+            mashed = self.scanner.read_int(13)
             num = ((mashed // 0xC0) << 8) + mashed % 0xC0
             num += 0x8140 if num < 0x1F00 else 0xC140
             nums.extend(divmod(num, 2 ** 8))

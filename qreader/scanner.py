@@ -16,7 +16,7 @@ class Scanner(object):
         """
         self.image = image.convert('L')
         self.info = self.read_info()
-        self.mask = self.apply_mask()
+        self.mask = self.get_mask()
         self.data = self._read_all_data()
         self._data_len = len(self.data)
         self._current_index = -1
@@ -32,9 +32,6 @@ class Scanner(object):
             data.write(six.text_type(self._get_bit(pos) ^ self.mask[pos]))
         return data.getvalue()
 
-    def read_bits(self, amount):
-        return [self.read_bit() for _ in range(amount)]
-
     def read_bit(self):
         self._current_index += 1
         if self._current_index >= self._data_len:
@@ -42,20 +39,16 @@ class Scanner(object):
             raise StopIteration()
         return self.data[self._current_index]
 
-    def get_int(self, amount_of_bits):
+    def read_int(self, amount_of_bits):
         val = 0
-        bits = self.read_bits(amount_of_bits)
+        bits = [self.read_bit() for _ in range(amount_of_bits)]
         for bit in bits:
             val = (val << 1) + int(bit)
         return val
 
-    def apply_mask(self):
-        mask = {}
+    def get_mask(self):
         mask_func = get_mask_func(self.info.mask_id)
-        for x in range(self.info.size):
-            for y in range(self.info.size):
-                mask[x, y] = 1 if mask_func(y, x) else 0
-        return mask
+        return {(x, y): 1 if mask_func(y, x) else 0 for x in range(self.info.size) for y in range(self.info.size)}
 
     def __iter__(self):
         while True:
