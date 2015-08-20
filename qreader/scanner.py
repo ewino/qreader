@@ -66,6 +66,7 @@ class Scanner(object):
         self.data = self._read_all_data()
         self._data_len = len(self.data)
         self._current_index = -1
+        self.reset()
 
     def reset(self):
         self._current_index = -1
@@ -241,10 +242,6 @@ class QrZigZagIterator(Iterator):
         self._advance_pos()
         if self._current[0] < 0:
             raise StopIteration()
-        return self._current
-
-    @property
-    def current(self):
         return self._current
 
 
