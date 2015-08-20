@@ -1,5 +1,6 @@
 from collections import Iterator
 from io import StringIO
+import six
 
 from qreader import tuples
 from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones
@@ -28,7 +29,7 @@ class Scanner(object):
         pos_iterator = QrZigZagIterator(self.info.size, get_dead_zones(self.info.version))
         data = StringIO()
         for pos in iter(pos_iterator):
-            data.write(str(self._get_bit(pos) ^ self.mask[pos]))
+            data.write(six.text_type(self._get_bit(pos) ^ self.mask[pos]))
         return data.getvalue()
 
     def read_bits(self, amount):
@@ -178,6 +179,8 @@ class QrZigZagIterator(Iterator):
         if self._current[0] < 0:
             raise StopIteration()
         return self._current
+
+    next = __next__
 
 
 class QRCodeInfo(object):
