@@ -1,3 +1,5 @@
+from _collections_abc import Iterable, Iterator
+from io import StringIO
 from itertools import permutations
 from qreader import tuples
 from qreader.utils import is_overlapping, get_mask_func
@@ -60,25 +62,30 @@ class Scanner(object):
         """
         self.image = image.convert('L')
         self.info = self.read_info()
-        dead_zones = self.get_dead_zones()
-        self.mask = self.apply_mask(dead_zones)
-        self._next_pos = ()
-        self._odd_col_modifier = False
-        self._scan_direction = 'u'
-        self.reset()
+        self.mask = self.apply_mask()
+        self.data = self._read_all_data()
+        self._data_len = len(self.data)
+        self._current_index = -1
 
     def reset(self):
-        self._next_pos = (self.info.size - 1, self.info.size - 1)
-        self._scan_direction = 'u'
-        self._odd_col_modifier = False
+        self._current_index = -1
+
+    def _read_all_data(self):
+        pos_iterator = QrZigZagIterator(self.info.size, self.get_dead_zones())
+        data = StringIO()
+        for pos in iter(pos_iterator):
+            data.write(str(self._get_bit(pos) ^ self.mask[pos]))
+        return data.getvalue()
 
     def read_bits(self, amount):
         return [self.read_bit() for _ in range(amount)]
 
     def read_bit(self):
-        bit = self._get_bit(self._next_pos) ^ self.mask[self._next_pos]
-        self._next_pos = self._get_next_pos(self._next_pos)
-        return bit
+        self._current_index += 1
+        if self._current_index >= self._data_len:
+            self._current_index = self._data_len
+            raise StopIteration()
+        return self.data[self._current_index]
 
     def get_int(self, amount_of_bits):
         val = 0
@@ -87,42 +94,17 @@ class Scanner(object):
             val = (val << 1) + int(bit)
         return val
 
-    def apply_mask(self, dead_zones):
+    def apply_mask(self):
         mask = {}
         mask_func = get_mask_func(self.info.mask_id)
         for x in range(self.info.size):
             for y in range(self.info.size):
                 mask[x, y] = 1 if mask_func(y, x) else 0
-        for zone in dead_zones:
-            for x in range(zone[0], zone[2] + 1):
-                for y in range(zone[1], zone[3] + 1):
-                    mask[x, y] = None
         return mask
 
     def __iter__(self):
-        while self._next_pos[0] >= 0 and self._next_pos[1] >= 0:
+        while True:
             yield self.read_bit()
-
-    def _get_next_pos(self, current):
-        pos = current
-        while pos[0] >= 0 and (pos == current or self.mask[pos] is None):
-            step = (-1, 0)
-            # We advance a line if we're in an odd column, but if we have the col_modified flag on, we switch it around
-            advance_line = ((self.info.size - pos[0]) % 2 == 0) ^ self._odd_col_modifier
-            if advance_line:
-                step = (1, -1 if self._scan_direction == 'u' else 1)
-                # if we're trying to advance a line but we've reached the edge, we probably shouldn't do that
-                if (pos[1] == 0 and self._scan_direction == 'u') or (pos[1] == self.info.size - 1 and self._scan_direction == 'd'):
-                    # swap scan direction
-                    self._scan_direction = 'd' if self._scan_direction == 'u' else 'u'
-                    # go one step left
-                    step = (-1, 0)
-                    # make sure we're not tripping over the timing array
-                    if pos[0] > 0 and all(self.mask[pos[0] - 1, y] is None for y in range(self.info.size)):
-                        step = (-2, 0)
-                        self._odd_col_modifier = not self._odd_col_modifier
-            pos = tuples.add(pos, step)
-        return pos
 
     def read_info(self):
         info = QRCodeInfo()
@@ -216,6 +198,54 @@ class Scanner(object):
             counted += 1
             start = tuples.add(start, step)
         return result
+
+
+class QrZigZagIterator(Iterator):
+    def __init__(self, size, dead_zones):
+        self.size = size
+        self.ignored_pos = {(x, y) for zone in dead_zones
+                            for x in range(zone[0], zone[2] + 1)
+                            for y in range(zone[1], zone[3] + 1)}
+        self._current = ()
+        self._scan_direction = 'u'
+        self._odd_col_modifier = False
+        self.reset()
+
+    def reset(self):
+        self._current = (self.size - 2, self.size)
+        self._scan_direction = 'u'
+        self._odd_col_modifier = False
+
+    def _advance_pos(self):
+        pos = self._current
+        while pos[0] >= 0 and (pos == self._current or pos in self.ignored_pos):
+            step = (-1, 0)
+            # We advance a line if we're in an odd column, but if we have the col_modified flag on, we switch it around
+            advance_line = ((self.size - pos[0]) % 2 == 0) ^ self._odd_col_modifier
+            if advance_line:
+                step = (1, -1 if self._scan_direction == 'u' else 1)
+                # if we're trying to advance a line but we've reached the edge, we should change directions
+                if (pos[1] == 0 and self._scan_direction == 'u') or (pos[1] == self.size - 1 and self._scan_direction == 'd'):
+                    # swap scan direction
+                    self._scan_direction = 'd' if self._scan_direction == 'u' else 'u'
+                    # go one step left
+                    step = (-1, 0)
+                    # make sure we're not tripping over the timing array
+                    if pos[0] > 0 and all((pos[0] - 1, y) in self.ignored_pos for y in range(self.size)):
+                        step = (-2, 0)
+                        self._odd_col_modifier = not self._odd_col_modifier
+            pos = tuples.add(pos, step)
+        self._current = pos
+
+    def __next__(self):
+        self._advance_pos()
+        if self._current[0] < 0:
+            raise StopIteration()
+        return self._current
+
+    @property
+    def current(self):
+        return self._current
 
 
 class QRCodeInfo(object):
