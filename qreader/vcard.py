@@ -7,7 +7,7 @@ __author__ = 'ewino'
 
 
 # A very small vCard parsing implementation, because vobject's looks quite very bloated.
-# Will probably be replaced by vobject or a lighter library (if I find any)
+# Will probably be replaced by vobject or a lighter library (if I find one)
 
 
 class vCard(object):
