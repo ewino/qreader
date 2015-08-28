@@ -76,15 +76,17 @@ class vCard(object):
         card = cls()
 
         for line in lines:
+            if not line.strip():
+                continue
             key, val = line.split(':', 1)
             if key in ignore_fields:
                 continue
             if ';' in key:
-                key, extra = re.findall('^(\w+);(?:\w+=)?(\w+)$', key)[0]
+                key, extra = re.findall('^(\w+);(?:\w+=)?(.+)$', key)[0]
                 val = '%s;%s' % (extra, val)
-            field = key_field_map[key]
+            field = key_field_map.get(key)
             if not field:
-                raise TypeError('Unknown vCard field: %s. This implementation only supports basic properties' % field)
+                raise TypeError('Unknown vCard field: %s. This implementation only supports basic properties' % key)
             if isinstance(field, tuple):
                 field, tpe = field
                 if tpe == datetime:

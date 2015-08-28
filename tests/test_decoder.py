@@ -5,7 +5,7 @@ from unittest import TestCase
 from qreader.constants import MODE_ECI, MODE_STRUCTURED_APPEND
 from qreader.decoder import QRDecoder
 from qreader.scanner import Scanner, QRCodeInfo
-from qreader.types import vCard
+from qreader.vcard import vCard
 
 __author__ = 'ewino'
 

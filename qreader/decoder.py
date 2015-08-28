@@ -2,7 +2,7 @@ from qreader.constants import MODE_NUMBER, MODE_ALPHA_NUM, ALPHANUM_CHARS, MODE_
     MODE_STRUCTURED_APPEND
 from qreader.scanner import Scanner
 from qreader.spec import bits_for_length
-from qreader.types import vCard
+from qreader.vcard import vCard
 from qreader.utils import ints_to_bytes
 
 __author__ = 'ewino'
