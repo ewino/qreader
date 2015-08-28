@@ -4,6 +4,7 @@ import six
 
 from qreader import tuples
 from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones
+from qreader.validation import validate_format_info
 
 __author__ = 'ewino'
 
@@ -93,10 +94,10 @@ class Scanner(object):
     def _read_format_info(self):
         source_1 = (self._get_straight_bits((8, -7), 7, 'd') << 8) + self._get_straight_bits((-1, 8), 8, 'l')
         source_2 = (self._get_straight_bits((7, 8), 8, 'l', (1,)) << 8) + self._get_straight_bits((8, 0), 9, 'd', (6,))
-        assert source_1 == source_2, 'discrepancy in format info'
-        format_info = source_1 ^ FORMAT_INFO_MASK
-        self.info.error_correction_level = (format_info >> 13) & 0b11
-        self.info.mask_id = (format_info >> 10) & 0b111
+
+        format_info = validate_format_info(source_1 ^ FORMAT_INFO_MASK, source_2 ^ FORMAT_INFO_MASK)
+        self.info.error_correction_level = format_info >> 3
+        self.info.mask_id = format_info & 0b111
 
     def _get_bit(self, coords):
         x, y = coords
