@@ -107,7 +107,8 @@ class TestDeadZones(TestCase):
         amounts = sum(([p**2] * x for p, x in enumerate([1, 5, 7, 7, 7, 7, 6])), [])  # 1*0, 5*1, 7*9, 7*16, 7*25...
         self.assertEqual(40, len(amounts))
         for version, amount in enumerate(amounts, start=1):
-            self.assertEqual(amount, len(get_dead_zones(version)) - self.REGULAR_ZONES_COUNT)
+            regular_zones_count = self.REGULAR_ZONES_COUNT + (2 if version >= 7 else 0)
+            self.assertEqual(amount, len(get_dead_zones(version)) - regular_zones_count)
 
     def test_illegal_versions(self):
         self.assertRaises(ValueError, lambda: get_dead_zones(-1))

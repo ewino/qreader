@@ -49,6 +49,7 @@ class TestScanner(TestCase):
         self.assertEqual(360, len(list(self._get_res_scanner('Qr-2-noborder.png'))))
         self.assertEqual(209, len(list(self._get_res_scanner('Qr-1.png'))))
         self.assertEqual(360, len(list(self._get_res_scanner('Qr-2.png'))))
+        # TODO: Add check for version >= 7 (ewino@2015-08-30)
 
     def test_info_str(self):
         self.assertEqual('<version 1, size 21, ec 2, mask 1>', str(self._get_res_scanner('Qr-1-noborder.png').info))

@@ -103,13 +103,17 @@ def size_by_version(version):
 def get_dead_zones(version):
     size = size_by_version(version)
     constant_zones = [
-        (0, 0, 8, 8),  # top left position
-        (size - 8, 0, size - 1, 8),  # top right position
+        (0, 0, 8, 8),  # top left position + format-info
+        (size - 8, 0, size - 1, 8),  # top right position + format-info
         (0, size - 8, 7, size - 1),  # bottom left position
         (8, size - 7, 8, size - 1),  # bottom left format info
         (8, 6, size - 9, 6),  # top timing array
         (6, 8, 6, size - 9)  # left timing array
     ]
+
+    if version >= 7:
+        constant_zones.append((size - 11, 0, size - 9, 5))  # top version info
+        constant_zones.append((0, size - 11, 5, size - 9))  # bottom (left) version info
 
     alignments_zones = []
     alignment_centers = list(permutations(ALIGNMENT_POSITIONS[version - 1], 2))
