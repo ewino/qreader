@@ -53,8 +53,6 @@ def validate_format_info(format_info, second_format_info_sample=None):
     for test_format in range(0, 32):
         test_code = (test_format << 10) ^ format_info_check(test_format << 10)
         test_dist = hamming_diff(format_info, test_code + (test_code << 15))
-        if test_dist == 0:
-            return test_format
 
         if test_dist < max_distance:
             max_distance = test_dist
