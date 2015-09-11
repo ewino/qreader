@@ -43,7 +43,7 @@ class QRDecoder(object):
             raise NotImplementedError('Structured append encoding not implemented yet')
         elif mode == MODE_ECI:
             raise NotImplementedError('Extended Channel Interpretation encoding not implemented yet')
-        else:  # pragma: no cover
+        else:
             raise TypeError('Unknown mode number: %s' % mode)
         return message
 
