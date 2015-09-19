@@ -60,3 +60,7 @@ def validate_format_info(format_info, second_format_info_sample=None):
         elif test_dist == max_distance:
             best_format = None
     return best_format
+
+
+def validate_data(data):
+    return data

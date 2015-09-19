@@ -4,7 +4,7 @@ import six
 
 from qreader import tuples
 from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones
-from qreader.validation import validate_format_info
+from qreader.validation import validate_format_info, validate_data
 
 __author__ = 'ewino'
 
@@ -15,23 +15,24 @@ class Scanner(object):
         :type image: PIL.Image.Image
         :return:
         """
-        self.image = image.convert('L')
+        self.image = image
+        self.prepare_source()
         self.info = self.read_info()
         self.mask = self.get_mask()
-        self.data = self._read_all_data()
+        self.data = validate_data(self._read_all_data())
         self._data_len = len(self.data)
         self._current_index = -1
         self.reset()
+
+    def prepare_source(self):
+        self.image = self.image.convert('L')
 
     def reset(self):
         self._current_index = -1
 
     def _read_all_data(self):
         pos_iterator = QrZigZagIterator(self.info.size, get_dead_zones(self.info.version))
-        data = StringIO()
-        for pos in iter(pos_iterator):
-            data.write(six.text_type(self._get_bit(pos) ^ self.mask[pos]))
-        return data.getvalue()
+        return [self._get_bit(pos) ^ self.mask[pos] for pos in pos_iterator]
 
     def read_bit(self):
         self._current_index += 1
@@ -44,7 +45,7 @@ class Scanner(object):
         val = 0
         bits = [self.read_bit() for _ in range(amount_of_bits)]
         for bit in bits:
-            val = (val << 1) + int(bit)
+            val = (val << 1) + bit
         return val
 
     def get_mask(self):

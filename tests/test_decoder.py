@@ -10,23 +10,24 @@ from qreader.vcard import vCard
 __author__ = 'ewino'
 
 
-# noinspection PyMissingConstructor
 class TextFileScanner(Scanner):
 
     def __init__(self, file_path, version):
-        with open(file_path, 'r') as f:
-            self.data = f.read()
-        self.info = QRCodeInfo()
-        self.info.version = version
-        self.position = 0
-        self.reset()
+        self._test_data_path = file_path
+        self._test_version = version
+        super(TextFileScanner, self).__init__(None)
 
-    def read_bit(self):
-        self.position += 1
-        return self.data[min(self.position - 1, len(self.data) - 1)]
+    def prepare_source(self):
+        pass
 
-    def reset(self):
-        self.position = 0
+    def read_info(self):
+        info = QRCodeInfo()
+        info.version = self._test_version
+        return info
+
+    def _read_all_data(self):
+        with open(self._test_data_path, 'r') as f:
+            return [int(x) for x in f.read()]
 
 
 # noinspection PyMissingConstructor
