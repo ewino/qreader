@@ -6,6 +6,9 @@ from qreader.validation import validate_format_info, validate_data
 
 __author__ = 'ewino'
 
+WHITE = 0
+BLACK = 1
+
 
 class Scanner(object):
     def __init__(self, image):
@@ -15,7 +18,10 @@ class Scanner(object):
         """
         self.image = image
         self.prepare_source()
-        self.info = self.read_info()
+
+        self.info = None
+        self.read_info()
+
         self.mask = self.get_mask()
         self.data = validate_data(self._read_all_data())
         self._data_len = len(self.data)
@@ -25,34 +31,9 @@ class Scanner(object):
     def prepare_source(self):
         self.image = self.image.convert('L')
 
-    def reset(self):
-        self._current_index = -1
-
-    def _read_all_data(self):
-        pos_iterator = QrZigZagIterator(self.info.size, get_dead_zones(self.info.version))
-        return [self._get_bit(pos) ^ self.mask[pos] for pos in pos_iterator]
-
-    def read_bit(self):
-        self._current_index += 1
-        if self._current_index >= self._data_len:
-            self._current_index = self._data_len
-            raise StopIteration()
-        return self.data[self._current_index]
-
-    def read_int(self, amount_of_bits):
-        val = 0
-        bits = [self.read_bit() for _ in range(amount_of_bits)]
-        for bit in bits:
-            val = (val << 1) + bit
-        return val
-
     def get_mask(self):
         mask_func = get_mask_func(self.info.mask_id)
         return {(x, y): 1 if mask_func(y, x) else 0 for x in range(self.info.size) for y in range(self.info.size)}
-
-    def __iter__(self):
-        while True:
-            yield self.read_bit()
 
     def read_info(self):
         info = QRCodeInfo()
@@ -64,31 +45,49 @@ class Scanner(object):
         self._read_format_info()
         return info
 
+    def _get_pixel(self, coords):
+        return 1 if self.image.getpixel(coords) < 128 else 0
+
     def get_image_borders(self):
-        # TODO: use QR finder patterns
-        min_x = min_y = max_x = max_y = None
-        for x in range(self.image.width):
-            for y in range(self.image.height):
-                if self.image.getpixel((x, y)) < 128:
-                    if min_x is None or min_x > x:
-                        min_x = x
-                    if max_x is None or max_x < x:
-                        max_x = x
-                    if min_y is None or min_y > y:
-                        min_y = y
-                    if max_y is None or max_y < y:
-                        max_y = y
+        def get_corner_pixel(canvas_corner, vector, max_distance):
+            for dist in range(max_distance):
+                for x in range(dist + 1):
+                    coords = (canvas_corner[0] + vector[0] * x, canvas_corner[1] + vector[1] * (dist - x))
+                    if self._get_pixel(coords) == BLACK:
+                        return coords
+            raise ValueError("Couldn't find one of the edges (%s-%s)" % (('top', 'bottom')[vector[1] == -1],
+                                                                          ('left', 'right')[vector[0] == -1]))
+
+        max_dist = min(self.image.width, self.image.height)
+        min_x, min_y = get_corner_pixel((0, 0), (1, 1), max_dist)
+        max_x, max_x_y = get_corner_pixel((self.image.width - 1, 0), (-1, 1), max_dist)
+        max_y_x, max_y = get_corner_pixel((0, self.image.height - 1), (1, -1), max_dist)
+        if max_x_y != min_y:
+            raise ValueError('Top-left position pattern not aligned with the top-right one')
+        if max_y_x != min_x:
+            raise ValueError('Top-left position pattern not aligned with the bottom-left one')
         return min_x, min_y, max_x, max_y
 
     def get_block_size(self, img_start):
         """
-        Returns the size in pixels of a single block. Right now only supports square blocks
+        Returns the size in pixels of a single block.
+        :param tuple[int, int] img_start: The topmost left pixel in the QR (MUST be black or dark).
         :return: A tuple of width, height in pixels of a block
-        :rtype: tuple[int]
+        :rtype: tuple[int, int]
         """
-        for i in range(1, min(self.image.width - img_start[0], self.image.height - img_start[1])):
-            if self.image.getpixel(tuples.add(img_start, i)) > 128:
-                return i, i
+        PATTERN_SIZE = 7
+
+        left, top = img_start
+        block_height, block_width = 0, 0
+        for i in range(1, self.image.width - left):
+            if self._get_pixel((left + i * PATTERN_SIZE, top)) == WHITE:
+                block_width = i
+                break
+        for i in range(1, self.image.height - top):
+            if self._get_pixel((left, top + i * PATTERN_SIZE)) == WHITE:
+                block_height = i
+                break
+        return block_width, block_height
 
     def _read_format_info(self):
         source_1 = (self._get_straight_bits((8, -7), 7, 'd') << 8) + self._get_straight_bits((-1, 8), 8, 'l')
@@ -98,14 +97,17 @@ class Scanner(object):
         self.info.error_correction_level = format_info >> 3
         self.info.mask_id = format_info & 0b111
 
+    def _read_all_data(self):
+        pos_iterator = QrZigZagIterator(self.info.size, get_dead_zones(self.info.version))
+        return [self._get_bit(pos) ^ self.mask[pos] for pos in pos_iterator]
+
     def _get_bit(self, coords):
         x, y = coords
         if x < 0:
             x += self.info.size
         if y < 0:
             y += self.info.size
-        color = self.image.getpixel(tuples.add(self.info.canvas[:2], tuples.multiply((x, y), self.info.block_size)))
-        return 1 if color < 128 else 0
+        return self._get_pixel(tuples.add(self.info.canvas[:2], tuples.multiply((x, y), self.info.block_size)))
 
     def _get_straight_bits(self, start, length, direction, skip=()):
         """
@@ -128,6 +130,29 @@ class Scanner(object):
             counted += 1
             start = tuples.add(start, step)
         return result
+
+    # Iteration methods #
+
+    def reset(self):
+        self._current_index = -1
+
+    def read_bit(self):
+        self._current_index += 1
+        if self._current_index >= self._data_len:
+            self._current_index = self._data_len
+            raise StopIteration()
+        return self.data[self._current_index]
+
+    def read_int(self, amount_of_bits):
+        val = 0
+        bits = [self.read_bit() for _ in range(amount_of_bits)]
+        for bit in bits:
+            val = (val << 1) + bit
+        return val
+
+    def __iter__(self):
+        while True:
+            yield self.read_bit()
 
 
 class QrZigZagIterator(Iterator):
