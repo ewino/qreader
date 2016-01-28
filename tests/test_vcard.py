@@ -1,7 +1,9 @@
 from datetime import datetime
-from unittest.case import TestCase
+
 from dateutil.tz import tzutc
+
 from qreader.vcard import vCard
+from tests.helpers import TestCase
 
 # The things we do to increase test coverage...
 # and it's a temporary module too!

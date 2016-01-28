@@ -1,5 +1,5 @@
-from unittest import TestCase
 from qreader import tuples
+from tests.helpers import TestCase
 
 __author__ = 'ewino'
 

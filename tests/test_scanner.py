@@ -1,19 +1,14 @@
-import os
-from unittest import TestCase
-from PIL import Image
 from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_H, ERROR_CORRECT_Q, ERROR_CORRECT_M
-from qreader.scanner import Scanner
+from qreader.scanner import ImageScanner, Scanner
+from tests.helpers import TestCase
 
 __author__ = 'ewino'
 
 
 class TestScanner(TestCase):
 
-    def _get_img_res(self, name):
-        return Image.open(os.path.join(os.path.dirname(__file__), 'resources', 'scanner', name))
-
     def _get_res_scanner(self, res_name):
-        return Scanner(self._get_img_res(res_name))
+        return ImageScanner(self._get_img_res(res_name))
 
     def _assert_info(self, res_name, version, ec, mask):
         info = self._get_res_scanner(res_name).info
@@ -29,16 +24,16 @@ class TestScanner(TestCase):
 
     def test_broken_canvas_sizes(self):
         with self.assertRaises(ValueError) as cm:
-            self._get_res_scanner('Qr-1-broken-pattern-1.png')
+            self._get_res_scanner('Qr-1-broken-pattern-1.png').read()
         self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the top-right one')
         with self.assertRaises(ValueError) as cm:
-            self._get_res_scanner('Qr-1-broken-pattern-2.png')
+            self._get_res_scanner('Qr-1-broken-pattern-2.png').read()
         self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the top-right one')
         with self.assertRaises(ValueError) as cm:
-            self._get_res_scanner('Qr-1-broken-pattern-3.png')
+            self._get_res_scanner('Qr-1-broken-pattern-3.png').read()
         self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the bottom-left one')
         with self.assertRaises(ValueError) as cm:
-            self._get_res_scanner('Qr-1-broken-too-light.png')
+            self._get_res_scanner('Qr-1-broken-too-light.png').read()
         self.assertEqual(cm.exception.args[0], 'Couldn\'t find one of the edges (top-left)')
 
     def test_info(self):
@@ -68,3 +63,11 @@ class TestScanner(TestCase):
     def test_info_str(self):
         self.assertEqual('<version 1, size 21, ec 2, mask 1>', str(self._get_res_scanner('Qr-1-noborder.png').info))
         self.assertEqual('<version 2, size 25, ec 2, mask 2>', str(self._get_res_scanner('Qr-2.png').info))
+
+
+class TestAbstractScanner(TestCase):
+    """ Made mostly to appease the coverage runner :P """
+    def test_that_its_abstract(self):
+        scanner = Scanner()
+        self.assertRaises(NotImplementedError, scanner._read_all_data)
+        self.assertRaises(NotImplementedError, scanner.read_info)

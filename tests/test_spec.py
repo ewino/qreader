@@ -1,7 +1,7 @@
-from unittest import TestCase
 from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_MEDIUM, MODE_SIZE_LARGE, MODE_KANJI, MODE_ALPHA_NUM, \
     MODE_NUMBER, MODE_BYTES
 from qreader.spec import get_mask_func, mode_sizes_for_version, bits_for_length, get_dead_zones
+from tests.helpers import TestCase
 
 __author__ = 'ewino'
 

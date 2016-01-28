@@ -1,6 +1,5 @@
-from unittest.case import TestCase
-
 from qreader.utils import is_overlapping, range_overlap
+from tests.helpers import TestCase
 
 __author__ = 'ewino'
 

@@ -1,5 +1,5 @@
-from unittest.case import TestCase
 from qreader.validation import validate_format_info, format_info_check
+from tests.helpers import TestCase
 
 __author__ = 'ewino'
 

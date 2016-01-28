@@ -11,25 +11,69 @@ BLACK = 1
 
 
 class Scanner(object):
+    def __init__(self):
+        self._current_index = -1
+        self._data_len = 0
+        self._info = None
+        self.data = None
+        self._was_read = False
+
+    @property
+    def info(self):
+        if not self._was_read:
+            self.read()
+        return self._info
+
+    def read(self):
+        self._was_read = True
+        self.read_info()
+        self.data = validate_data(self._read_all_data())
+        self._data_len = len(self.data)
+        self.reset()
+
+    def read_info(self):
+        raise NotImplementedError()
+
+    def _read_all_data(self):
+        raise NotImplementedError()
+
+    # Iteration methods #
+
+    def reset(self):
+        self._current_index = -1
+
+    def read_bit(self):
+        if not self._was_read:
+            self.read()
+        self._current_index += 1
+        if self._current_index >= self._data_len:
+            self._current_index = self._data_len
+            raise StopIteration()
+        return self.data[self._current_index]
+
+    def read_int(self, amount_of_bits):
+        if not self._was_read:
+            self.read()
+        val = 0
+        bits = [self.read_bit() for _ in range(amount_of_bits)]
+        for bit in bits:
+            val = (val << 1) + bit
+        return val
+
+    def __iter__(self):
+        while True:
+            yield self.read_bit()
+
+
+class ImageScanner(Scanner):
     def __init__(self, image):
         """
         :type image: PIL.Image.Image
         :return:
         """
-        self.image = image
-        self.prepare_source()
-
-        self.info = None
-        self.read_info()
-
-        self.mask = self.get_mask()
-        self.data = validate_data(self._read_all_data())
-        self._data_len = len(self.data)
-        self._current_index = -1
-        self.reset()
-
-    def prepare_source(self):
-        self.image = self.image.convert('L')
+        super(ImageScanner, self).__init__()
+        self.image = image.convert('L')  # gray-scale it baby!
+        self.mask = None
 
     def get_mask(self):
         mask_func = get_mask_func(self.info.mask_id)
@@ -41,8 +85,9 @@ class Scanner(object):
         info.block_size = self.get_block_size(info.canvas[:2])
         info.size = int((info.canvas[2] - (info.canvas[0]) + 1) / info.block_size[0])
         info.version = (info.size - 17) // 4
-        self.info = info
+        self._info = info
         self._read_format_info()
+        self.mask = self.get_mask()
         return info
 
     def _get_pixel(self, coords):
@@ -56,7 +101,7 @@ class Scanner(object):
                     if self._get_pixel(coords) == BLACK:
                         return coords
             raise ValueError("Couldn't find one of the edges (%s-%s)" % (('top', 'bottom')[vector[1] == -1],
-                                                                          ('left', 'right')[vector[0] == -1]))
+                                                                         ('left', 'right')[vector[0] == -1]))
 
         max_dist = min(self.image.width, self.image.height)
         min_x, min_y = get_corner_pixel((0, 0), (1, 1), max_dist)
@@ -75,16 +120,16 @@ class Scanner(object):
         :return: A tuple of width, height in pixels of a block
         :rtype: tuple[int, int]
         """
-        PATTERN_SIZE = 7
+        pattern_size = 7
 
         left, top = img_start
         block_height, block_width = 0, 0
         for i in range(1, self.image.width - left):
-            if self._get_pixel((left + i * PATTERN_SIZE, top)) == WHITE:
+            if self._get_pixel((left + i * pattern_size, top)) == WHITE:
                 block_width = i
                 break
         for i in range(1, self.image.height - top):
-            if self._get_pixel((left, top + i * PATTERN_SIZE)) == WHITE:
+            if self._get_pixel((left, top + i * pattern_size)) == WHITE:
                 block_height = i
                 break
         return block_width, block_height
@@ -114,14 +159,14 @@ class Scanner(object):
         Reads several bits from the specified coordinates
         :param tuple[int] start: The x, y of the start position
         :param int length: the amount of bits to read
-        :param str direction: r(ight), d(own), l(eft), u(p)
+        :param str direction: d(own) or l(eft)
         :param tuple skip: the indexes to skip. they will still be counted on for the length
         :return: The bits read as an integer
         :rtype: int
         """
         result = 0
         counted = 0
-        step = (1, 0) if direction == 'r' else (0, 1) if direction == 'd' else (-1, 0) if direction == 'l' else (0, -1)
+        step = (0, 1) if direction == 'd' else (-1, 0)
         for i in range(length):
             if i in skip:
                 start = tuples.add(start, step)
@@ -130,29 +175,6 @@ class Scanner(object):
             counted += 1
             start = tuples.add(start, step)
         return result
-
-    # Iteration methods #
-
-    def reset(self):
-        self._current_index = -1
-
-    def read_bit(self):
-        self._current_index += 1
-        if self._current_index >= self._data_len:
-            self._current_index = self._data_len
-            raise StopIteration()
-        return self.data[self._current_index]
-
-    def read_int(self, amount_of_bits):
-        val = 0
-        bits = [self.read_bit() for _ in range(amount_of_bits)]
-        for bit in bits:
-            val = (val << 1) + bit
-        return val
-
-    def __iter__(self):
-        while True:
-            yield self.read_bit()
 
 
 class QrZigZagIterator(Iterator):
