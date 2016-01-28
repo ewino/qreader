@@ -1,6 +1,4 @@
 from collections import Iterator
-from io import StringIO
-import six
 
 from qreader import tuples
 from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones
@@ -88,7 +86,7 @@ class Scanner(object):
         :return: A tuple of width, height in pixels of a block
         :rtype: tuple[int]
         """
-        for i in range(1, 20):
+        for i in range(1, min(self.image.width - img_start[0], self.image.height - img_start[1])):
             if self.image.getpixel(tuples.add(img_start, i)) > 128:
                 return i, i
 
@@ -157,7 +155,8 @@ class QrZigZagIterator(Iterator):
             if advance_line:
                 step = (1, -1 if self._scan_direction == 'u' else 1)
                 # if we're trying to advance a line but we've reached the edge, we should change directions
-                if (pos[1] == 0 and self._scan_direction == 'u') or (pos[1] == self.size - 1 and self._scan_direction == 'd'):
+                if (pos[1] == 0 and self._scan_direction == 'u') or \
+                        (pos[1] == self.size - 1 and self._scan_direction == 'd'):
                     # swap scan direction
                     self._scan_direction = 'd' if self._scan_direction == 'u' else 'u'
                     # go one step left
@@ -198,4 +197,5 @@ class QRCodeInfo(object):
     size = 0
 
     def __str__(self):
-        return '<version %s, size %s, ec %s, mask %s>' % (self.version, self.size, self.error_correction_level, self.mask_id)
+        return '<version %s, size %s, ec %s, mask %s>' % \
+               (self.version, self.size, self.error_correction_level, self.mask_id)
