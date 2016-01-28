@@ -10,7 +10,7 @@ __author__ = 'ewino'
 class TestScanner(TestCase):
 
     def _get_img_res(self, name):
-        return Image.open(os.path.join(os.path.dirname(__file__), 'resources', name))
+        return Image.open(os.path.join(os.path.dirname(__file__), 'resources', 'scanner', name))
 
     def _get_res_scanner(self, res_name):
         return Scanner(self._get_img_res(res_name))
@@ -26,6 +26,20 @@ class TestScanner(TestCase):
         self.assertEqual((0, 0, 199, 199), self._get_res_scanner('Qr-2-noborder.png').info.canvas)
         self.assertEqual((36, 36, 182, 182), self._get_res_scanner('Qr-1.png').info.canvas)
         self.assertEqual((35, 35, 184, 184), self._get_res_scanner('Qr-2.png').info.canvas)
+
+    def test_broken_canvas_sizes(self):
+        with self.assertRaises(ValueError) as cm:
+            self._get_res_scanner('Qr-1-broken-pattern-1.png')
+        self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the top-right one')
+        with self.assertRaises(ValueError) as cm:
+            self._get_res_scanner('Qr-1-broken-pattern-2.png')
+        self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the top-right one')
+        with self.assertRaises(ValueError) as cm:
+            self._get_res_scanner('Qr-1-broken-pattern-3.png')
+        self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the bottom-left one')
+        with self.assertRaises(ValueError) as cm:
+            self._get_res_scanner('Qr-1-broken-too-light.png')
+        self.assertEqual(cm.exception.args[0], 'Couldn\'t find one of the edges (top-left)')
 
     def test_info(self):
         self._assert_info('Qr-1-noborder.png', 1, ERROR_CORRECT_H, 1)
