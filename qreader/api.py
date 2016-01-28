@@ -3,7 +3,8 @@ from io import BufferedIOBase
 import six
 import PIL.Image
 
-from qreader import ImageScanner, QRDecoder
+from qreader.decoder import QRDecoder
+from qreader.scanner import ImageScanner
 
 __author__ = 'ewino'
 
