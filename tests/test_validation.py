@@ -97,7 +97,7 @@ class TestFormatInfoErrorCorrection(TestCase):
         for sample in samples:
             self.assertNotEqual(sample >> 10, validate_format_info(sample ^ 0b111111000000000))
 
-    def test_unsalvagable_format_info(self):
+    def test_unsalvageable_format_info(self):
         sample = 0b010001111010110 ^ 0b000001111111111  # flip all error correction bits
         self.assertRaises(QrCorruptError, validate_format_info, sample)
 
