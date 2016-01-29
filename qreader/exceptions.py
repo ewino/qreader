@@ -7,6 +7,10 @@ class QrImageException(QrReadingException):
     pass
 
 
+class QrCorruptError(QrReadingException):
+    pass
+
+
 class QrImageRecognitionException(QrImageException):
     pass
 
