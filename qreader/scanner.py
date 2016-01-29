@@ -1,6 +1,7 @@
 from collections import Iterator
 
 from qreader import tuples
+from qreader.exceptions import QrImageRecognitionException
 from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones
 from qreader.validation import validate_format_info, validate_data
 
@@ -100,17 +101,18 @@ class ImageScanner(Scanner):
                     coords = (canvas_corner[0] + vector[0] * x, canvas_corner[1] + vector[1] * (dist - x))
                     if self._get_pixel(coords) == BLACK:
                         return coords
-            raise ValueError("Couldn't find one of the edges (%s-%s)" % (('top', 'bottom')[vector[1] == -1],
-                                                                         ('left', 'right')[vector[0] == -1]))
+            raise QrImageRecognitionException(
+                "Couldn't find one of the edges ({0:s}-{1:s})".format(('top', 'bottom')[vector[1] == -1],
+                                                                      ('left', 'right')[vector[0] == -1]))
 
         max_dist = min(self.image.width, self.image.height)
         min_x, min_y = get_corner_pixel((0, 0), (1, 1), max_dist)
         max_x, max_x_y = get_corner_pixel((self.image.width - 1, 0), (-1, 1), max_dist)
         max_y_x, max_y = get_corner_pixel((0, self.image.height - 1), (1, -1), max_dist)
         if max_x_y != min_y:
-            raise ValueError('Top-left position pattern not aligned with the top-right one')
+            raise QrImageRecognitionException('Top-left position pattern not aligned with the top-right one')
         if max_y_x != min_x:
-            raise ValueError('Top-left position pattern not aligned with the bottom-left one')
+            raise QrImageRecognitionException('Top-left position pattern not aligned with the bottom-left one')
         return min_x, min_y, max_x, max_y
 
     def get_block_size(self, img_start):

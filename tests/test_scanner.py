@@ -1,4 +1,5 @@
 from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_H, ERROR_CORRECT_Q, ERROR_CORRECT_M
+from qreader.exceptions import QrImageRecognitionException
 from qreader.scanner import ImageScanner, Scanner
 from tests.helpers import TestCase
 
@@ -23,18 +24,14 @@ class TestScanner(TestCase):
         self.assertEqual((35, 35, 184, 184), self._get_res_scanner('Qr-2.png').info.canvas)
 
     def test_broken_canvas_sizes(self):
-        with self.assertRaises(ValueError) as cm:
-            self._get_res_scanner('Qr-1-broken-pattern-1.png').read()
-        self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the top-right one')
-        with self.assertRaises(ValueError) as cm:
-            self._get_res_scanner('Qr-1-broken-pattern-2.png').read()
-        self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the top-right one')
-        with self.assertRaises(ValueError) as cm:
-            self._get_res_scanner('Qr-1-broken-pattern-3.png').read()
-        self.assertEqual(cm.exception.args[0], 'Top-left position pattern not aligned with the bottom-left one')
-        with self.assertRaises(ValueError) as cm:
-            self._get_res_scanner('Qr-1-broken-too-light.png').read()
-        self.assertEqual(cm.exception.args[0], 'Couldn\'t find one of the edges (top-left)')
+        self.assertRaisesMsg(QrImageRecognitionException, self._get_res_scanner('Qr-1-broken-pattern-1.png').read,
+                             'Top-left position pattern not aligned with the top-right one')
+        self.assertRaisesMsg(QrImageRecognitionException, self._get_res_scanner('Qr-1-broken-pattern-2.png').read,
+                             'Top-left position pattern not aligned with the top-right one')
+        self.assertRaisesMsg(QrImageRecognitionException, self._get_res_scanner('Qr-1-broken-pattern-3.png').read,
+                             'Top-left position pattern not aligned with the bottom-left one')
+        self.assertRaisesMsg(QrImageRecognitionException, self._get_res_scanner('Qr-1-broken-too-light.png').read,
+                             "Couldn't find one of the edges (top-left)")
 
     def test_info(self):
         self._assert_info('Qr-1-noborder.png', 1, ERROR_CORRECT_H, 1)

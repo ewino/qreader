@@ -1,7 +1,8 @@
 from itertools import permutations
 from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_LARGE
 from qreader.constants import MODE_SIZE_MEDIUM
-from qreader.utils import is_overlapping
+from qreader.exceptions import QrFormatError, IllegalQrVersionError
+from qreader.utils import is_rect_overlapping
 
 __author__ = 'ewino'
 
@@ -57,6 +58,7 @@ ALIGNMENT_POSITIONS = [
 def get_mask_func(mask_id):
     """
     Return the mask function for the given mask pattern.
+    :param int mask_id: The mask ID in the range 0-7.
     """
     id_to_mask = {
         0: lambda i, j: (i + j) % 2 == 0,  # 000
@@ -70,33 +72,33 @@ def get_mask_func(mask_id):
     }
     if mask_id in id_to_mask:
         return id_to_mask[mask_id]
-    raise TypeError("Bad mask pattern: " + mask_id)
+    raise QrFormatError("Bad mask pattern: {0!r:s}".format(mask_id))
 
 
 def mode_sizes_for_version(version):
     if version != int(version):
-        raise ValueError('QR version (%s) should be an integer' % (version,))
+        raise IllegalQrVersionError(version)
     if 1 <= version <= 9:
         return MODE_SIZE_SMALL
     elif 10 <= version <= 26:
         return MODE_SIZE_MEDIUM
     elif 27 <= version <= 40:
         return MODE_SIZE_LARGE
-    raise ValueError('Unknown QR version: %s' % (version,))
+    raise IllegalQrVersionError(version)
 
 
 def bits_for_length(version, data_mode):
     size_mode = mode_sizes_for_version(version)
 
     if data_mode not in size_mode:
-        raise TypeError("Unknown data type ID: %s" % (data_mode,))
+        raise QrFormatError(u"Unknown data type ID: {0!r:s}".format(data_mode, ))
 
     return size_mode[data_mode]
 
 
 def size_by_version(version):
     if version < 1 or version > 40 or not version == int(version):
-        raise ValueError('Illegal QR version: %s' % version)
+        raise IllegalQrVersionError(version)
     return 17 + version * 4
 
 
@@ -121,6 +123,6 @@ def get_dead_zones(version):
 
     for center_x, center_y in alignment_centers:
         alignment_zone = (center_x - 2, center_y - 2, center_x + 2, center_y + 2)
-        if all(not is_overlapping(alignment_zone, dead_zone) for dead_zone in constant_zones):
+        if all(not is_rect_overlapping(alignment_zone, dead_zone) for dead_zone in constant_zones):
             alignments_zones.append(alignment_zone)
     return constant_zones + alignments_zones

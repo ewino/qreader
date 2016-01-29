@@ -2,6 +2,7 @@
 
 from qreader.constants import MODE_ECI, MODE_STRUCTURED_APPEND
 from qreader.decoder import QRDecoder
+from qreader.exceptions import IllegalQrMessageModeId
 from qreader.scanner import QRCodeInfo, Scanner
 from qreader.vcard import vCard
 from tests.helpers import TestCase
@@ -46,9 +47,8 @@ class TestDecoder(TestCase):
         self.assertEqual(u'新高', self._get_decoder('shintaka-Q', 1).get_first())
 
     def test_unknown_type(self):
-        with self.assertRaises(TypeError) as cm:
-            self._get_decoder('nums-malformed-H.txt', 1).get_first()
-        self.assertEqual('Unknown mode number: 15', cm.exception.args[0])
+        self.assertRaisesMsg(IllegalQrMessageModeId, self._get_decoder('nums-malformed-H.txt', 1).get_first,
+                             'Unknown mode ID: 15')
 
     def test_eci(self):
         self.assertRaises(NotImplementedError, lambda: self._get_decoder('shintaka-Q', 1)._decode_message(MODE_ECI))

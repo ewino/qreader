@@ -31,4 +31,4 @@ def read(image_or_path):
         #     return result[0]
         # else:
         #     return result
-    raise TypeError('parameter should be a PIL image object or a path to an image file')
+    raise TypeError('parameter should be a PIL image object, a file-like object, or a path to an image file')

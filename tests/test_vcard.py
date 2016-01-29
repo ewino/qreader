@@ -20,14 +20,16 @@ class TestVCardFromText(TestCase):
         self.assertRaises(ValueError, lambda: vCard.from_text('Welcome to Jamaica, Have a good day'))
 
     def test_weird_field(self):
-        with self.assertRaises(TypeError) as cm:
-            vCard.from_text('BEGIN:VCARD\nEWINO:BLA\nEND:VCARD')
-        self.assertEquals(cm.exception.args[0], 'Unknown vCard field: EWINO. This implementation only supports '
-                                                'basic properties')
+        field_name, field_val = 'EWINO', 'BLA'
+        self.assertRaisesMsg(TypeError, vCard.from_text,
+                             ('Unknown vCard field: {0}. '
+                              'This implementation only supports basic properties').format(field_name),
+                             'BEGIN:VCARD\n{0}:{1}\nEND:VCARD'.format(field_name, field_val))
         vCard.from_text('BEGIN:VCARD\nVERSION:4\nEND:VCARD')
 
     def test_date_fields(self):
-        self.assertEquals(datetime(2015, 8, 28, tzinfo=tzutc()), vCard.from_text('BEGIN:VCARD\nANNIVERSARY:20150828T000000Z\nEND:VCARD').anniversary)
+        self.assertEquals(datetime(2015, 8, 28, tzinfo=tzutc()),
+                          vCard.from_text('BEGIN:VCARD\nANNIVERSARY:20150828T000000Z\nEND:VCARD').anniversary)
 
     def test_complex_fields(self):
         card = vCard.from_text('BEGIN:VCARD\n'
@@ -38,6 +40,7 @@ class TestVCardFromText(TestCase):
         self.assertEquals(1, len(card.phones))
         self.assertEquals(('WORK,VOICE', '(111) 555-1212'), card.phones[0])
         self.assertEquals(1, len(card.addresses))
-        self.assertEquals(('WORK', '', '', '100 Waters Edge', 'Baytown', 'LA', '30314', 'United States of America'), card.addresses[0])
+        self.assertEquals(('WORK', '', '', '100 Waters Edge', 'Baytown', 'LA', '30314', 'United States of America'),
+                          card.addresses[0])
         self.assertEquals(2, len(card.categories))
         self.assertEquals(['swimmer', 'biker'], card.categories)

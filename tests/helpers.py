@@ -17,3 +17,8 @@ class TestCase(BaseTestCase):
             path = list(path)  # as it's a tuple that doesn't support item assignment
             path[-1] += '.txt'
         return os.path.join(os.path.dirname(__file__), 'resources', 'decoder', *path)
+
+    def assertRaisesMsg(self, exc_type, func, exc_msg, *args, **kwargs):
+        with self.assertRaises(exc_type) as cm:
+            func(*args, **kwargs)
+        self.assertEquals(cm.exception.args[0], exc_msg)

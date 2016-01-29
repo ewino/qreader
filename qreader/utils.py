@@ -3,14 +3,17 @@ import six
 __author__ = 'ewino'
 
 
-def is_overlapping(rect1, rect2):
-    h_overlaps = range_overlap((rect1[0], rect1[2]), (rect2[0], rect2[2]))
-    v_overlaps = range_overlap((rect1[1], rect1[3]), (rect2[1], rect2[3]))
+def is_rect_overlapping(rect1, rect2):
+    h_overlaps = is_range_overlapping((rect1[0], rect1[2]), (rect2[0], rect2[2]))
+    v_overlaps = is_range_overlapping((rect1[1], rect1[3]), (rect2[1], rect2[3]))
     return h_overlaps and v_overlaps
 
 
-def range_overlap(a, b):
-    """Neither range is completely greater than the other"""
+def is_range_overlapping(a, b):
+    """Neither range is completely greater than the other
+    :param tuple a: first range
+    :param tuple b: second range
+    """
     return (a[0] <= b[1]) and (b[0] <= a[1])
 
 

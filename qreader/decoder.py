@@ -1,8 +1,9 @@
 from qreader.constants import MODE_NUMBER, MODE_ALPHA_NUM, ALPHANUM_CHARS, MODE_BYTES, MODE_KANJI, MODE_ECI, \
     MODE_STRUCTURED_APPEND
+from qreader.exceptions import IllegalQrMessageModeId
 from qreader.spec import bits_for_length
-from qreader.vcard import vCard
 from qreader.utils import ints_to_bytes
+from qreader.vcard import vCard
 
 __author__ = 'ewino'
 
@@ -43,7 +44,7 @@ class QRDecoder(object):
         elif mode == MODE_ECI:
             raise NotImplementedError('Extended Channel Interpretation encoding not implemented yet')
         else:
-            raise TypeError('Unknown mode number: %s' % mode)
+            raise IllegalQrMessageModeId(mode)
         return message
 
     def _decode_numeric_message(self):

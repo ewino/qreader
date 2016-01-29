@@ -1,5 +1,6 @@
 from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_MEDIUM, MODE_SIZE_LARGE, MODE_KANJI, MODE_ALPHA_NUM, \
     MODE_NUMBER, MODE_BYTES
+from qreader.exceptions import IllegalQrVersionError, QrFormatError
 from qreader.spec import get_mask_func, mode_sizes_for_version, bits_for_length, get_dead_zones
 from tests.helpers import TestCase
 
@@ -15,8 +16,8 @@ class TestMasks(TestCase):
                     self.assertIn(mask_func(i, j), (0, 1))
 
     def test_nonexistent_masks(self):
-        self.assertRaises(TypeError, lambda: get_mask_func(-1))
-        self.assertRaises(TypeError, lambda: get_mask_func(8))
+        self.assertRaisesMsg(QrFormatError, lambda: get_mask_func(-1), 'Bad mask pattern: -1')
+        self.assertRaisesMsg(QrFormatError, lambda: get_mask_func(8), 'Bad mask pattern: 8')
 
     def test_mask_formula_correctness(self):
         mask_samples = {
@@ -57,14 +58,14 @@ class TestCharCounts(TestCase):
         self.assertEqual(MODE_SIZE_LARGE, mode_sizes_for_version(40))
 
     def test_size_for_illegal_versions(self):
-        self.assertRaises(ValueError, lambda: mode_sizes_for_version(0))
-        self.assertRaises(ValueError, lambda: mode_sizes_for_version(-1))
-        self.assertRaises(ValueError, lambda: mode_sizes_for_version(41))
-        self.assertRaises(ValueError, lambda: mode_sizes_for_version(0.5))
-        self.assertRaises(ValueError, lambda: mode_sizes_for_version(-1.5))
-        self.assertRaises(ValueError, lambda: mode_sizes_for_version(10.5))
-        self.assertRaises(ValueError, lambda: mode_sizes_for_version(9.5))
-        self.assertRaises(ValueError, lambda: mode_sizes_for_version(40.5))
+        self.assertRaises(IllegalQrVersionError, lambda: mode_sizes_for_version(0))
+        self.assertRaises(IllegalQrVersionError, lambda: mode_sizes_for_version(-1))
+        self.assertRaises(IllegalQrVersionError, lambda: mode_sizes_for_version(41))
+        self.assertRaises(IllegalQrVersionError, lambda: mode_sizes_for_version(0.5))
+        self.assertRaises(IllegalQrVersionError, lambda: mode_sizes_for_version(-1.5))
+        self.assertRaises(IllegalQrVersionError, lambda: mode_sizes_for_version(10.5))
+        self.assertRaises(IllegalQrVersionError, lambda: mode_sizes_for_version(9.5))
+        self.assertRaises(IllegalQrVersionError, lambda: mode_sizes_for_version(40.5))
 
     def test_char_counts(self):
         self.assertEqual(8, bits_for_length(8, MODE_KANJI))
@@ -85,16 +86,21 @@ class TestCharCounts(TestCase):
 
     def test_illegal_char_counts(self):
         # illegal version
-        self.assertRaises(ValueError, lambda: bits_for_length(0, 1))
-        self.assertRaises(ValueError, lambda: bits_for_length(41, 1))
-        self.assertRaises(ValueError, lambda: bits_for_length(8.5, 1))
+        self.assertRaises(IllegalQrVersionError, lambda: bits_for_length(0, 1))
+        self.assertRaises(IllegalQrVersionError, lambda: bits_for_length(41, 1))
+        self.assertRaises(IllegalQrVersionError, lambda: bits_for_length(8.5, 1))
 
         # illegal modes
-        self.assertRaises(TypeError, lambda: bits_for_length(8, 0))
-        self.assertRaises(TypeError, lambda: bits_for_length(8, -1))
-        self.assertRaises(TypeError, lambda: bits_for_length(8, 3))
-        self.assertRaises(TypeError, lambda: bits_for_length(8, 7))
-        self.assertRaises(TypeError, lambda: bits_for_length(8, 9))
+        self.assertRaisesMsg(QrFormatError, lambda: bits_for_length(8, 0), 'Unknown data type ID: 0')
+        self.assertRaisesMsg(QrFormatError, lambda: bits_for_length(8, -1), 'Unknown data type ID: -1')
+        self.assertRaisesMsg(QrFormatError, lambda: bits_for_length(8, 3), 'Unknown data type ID: 3')
+        self.assertRaisesMsg(QrFormatError, lambda: bits_for_length(8, 7), 'Unknown data type ID: 7')
+        self.assertRaisesMsg(QrFormatError, lambda: bits_for_length(8, 9), 'Unknown data type ID: 9')
+
+        # downright weird modes
+        self.assertRaisesMsg(QrFormatError, lambda: bits_for_length(8, 3.5), 'Unknown data type ID: 3.5')
+        self.assertRaisesMsg(QrFormatError, lambda: bits_for_length(8, None), 'Unknown data type ID: None')
+        self.assertRaisesMsg(QrFormatError, lambda: bits_for_length(8, 'hi'), "Unknown data type ID: 'hi'")
 
 
 class TestDeadZones(TestCase):
@@ -111,7 +117,7 @@ class TestDeadZones(TestCase):
             self.assertEqual(amount, len(get_dead_zones(version)) - regular_zones_count)
 
     def test_illegal_versions(self):
-        self.assertRaises(ValueError, lambda: get_dead_zones(-1))
-        self.assertRaises(ValueError, lambda: get_dead_zones(0))
-        self.assertRaises(ValueError, lambda: get_dead_zones(1.5))
-        self.assertRaises(ValueError, lambda: get_dead_zones(41))
+        self.assertRaises(IllegalQrVersionError, lambda: get_dead_zones(-1))
+        self.assertRaises(IllegalQrVersionError, lambda: get_dead_zones(0))
+        self.assertRaises(IllegalQrVersionError, lambda: get_dead_zones(1.5))
+        self.assertRaises(IllegalQrVersionError, lambda: get_dead_zones(41))
