@@ -1,10 +1,10 @@
 __author__ = 'ewino'
 
-# QR error correct levels (taken from qrcode package)
-ERROR_CORRECT_L = 1
-ERROR_CORRECT_M = 0
-ERROR_CORRECT_Q = 3
-ERROR_CORRECT_H = 2
+# QR error correct levels
+ERROR_CORRECT_L = 0
+ERROR_CORRECT_M = 1
+ERROR_CORRECT_Q = 2
+ERROR_CORRECT_H = 3
 
 # QR encoding modes (based on qrcode package)
 MODE_NUMBER = 1

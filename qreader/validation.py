@@ -1,5 +1,6 @@
 from qreader.exceptions import QrCorruptError
-from qreader.spec import FORMAT_INFO_BCH_GENERATOR
+from qreader.spec import FORMAT_INFO_BCH_GENERATOR, DATA_BLOCKS_INFO
+from reedsolo import RSCodec
 
 __author__ = 'ewino'
 
@@ -69,5 +70,7 @@ def validate_format_info(format_info, second_format_info_sample=None):
     return best_format
 
 
-def validate_data(data):
+def validate_data(data, version, ec_level):
+    # block_info = DATA_BLOCKS_INFO[version][ec_level]
+    # value = RSCodec().decode(data)
     return data

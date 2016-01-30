@@ -2,7 +2,7 @@ from collections import Iterator
 
 from qreader import tuples
 from qreader.exceptions import QrImageRecognitionException
-from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones
+from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones, ec_level_from_format_info_code
 from qreader.validation import validate_format_info, validate_data
 
 __author__ = 'ewino'
@@ -21,6 +21,9 @@ class Scanner(object):
 
     @property
     def info(self):
+        """ The meta info for the QR code. Reads the code on access if needed.
+        :rtype: QRCodeInfo
+        """
         if not self._was_read:
             self.read()
         return self._info
@@ -28,7 +31,7 @@ class Scanner(object):
     def read(self):
         self._was_read = True
         self.read_info()
-        self.data = validate_data(self._read_all_data())
+        self.data = validate_data(self._read_all_data(), self.info.version, self.info.error_correction_level)
         self._data_len = len(self.data)
         self.reset()
 
@@ -141,7 +144,7 @@ class ImageScanner(Scanner):
         source_2 = (self._get_straight_bits((7, 8), 8, 'l', (1,)) << 8) + self._get_straight_bits((8, 0), 9, 'd', (6,))
 
         format_info = validate_format_info(source_1 ^ FORMAT_INFO_MASK, source_2 ^ FORMAT_INFO_MASK)
-        self.info.error_correction_level = format_info >> 3
+        self.info.error_correction_level = ec_level_from_format_info_code(format_info >> 3)
         self.info.mask_id = format_info & 0b111
 
     def _read_all_data(self):
@@ -246,5 +249,5 @@ class QRCodeInfo(object):
     size = 0
 
     def __str__(self):
-        return '<version %s, size %s, ec %s, mask %s>' % \
-               (self.version, self.size, self.error_correction_level, self.mask_id)
+        return '<version %s, ec %s, mask %s>' % \
+               (self.version, self.error_correction_level, self.mask_id)
