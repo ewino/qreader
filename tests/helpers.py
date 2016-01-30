@@ -1,8 +1,10 @@
+# encoding=utf-8
+
 import os
 from unittest import TestCase as BaseTestCase
 
 from PIL import Image
-from qrcode.constants import ERROR_CORRECT_L, ERROR_CORRECT_M, ERROR_CORRECT_Q, ERROR_CORRECT_H
+from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_M, ERROR_CORRECT_Q, ERROR_CORRECT_H
 
 
 class Example(object):
@@ -39,21 +41,21 @@ class Example(object):
 
 
 class EXAMPLES:
-    simple_1 = Example('Qr-1.png', 1, ERROR_CORRECT_Q, mask=1)  # Ver1
-    simple_2 = Example('Qr-2.png', 2, ERROR_CORRECT_Q, mask=2, txt_name='Version2.txt')  # Version 2
+    simple_1 = Example('Qr-1.png', 1, ERROR_CORRECT_H, mask=1)  # Ver1
+    simple_2 = Example('Qr-2.png', 2, ERROR_CORRECT_H, mask=2, txt_name='Version2.txt')  # Version 2
     # TODO: LATIN-L doesn't match it's text file (text file version preferred). Should regenerate it (ewino@2016-01-30)
-    simple_3 = Example('Qr-3-Latin-L.jpg', 3, ERROR_CORRECT_M, mask=4, txt_name='Latin-L.txt')  # Hello!
+    simple_3 = Example('Qr-3-Latin-L.jpg', 3, ERROR_CORRECT_L, mask=4, txt_name='Latin-L.txt')  # Hello!
 
-    noborder_1 = Example('Qr-1-noborder.png', 1, ERROR_CORRECT_Q, mask=1)  # Ver1
-    noborder_2 = Example('Qr-2-noborder.png', 2, ERROR_CORRECT_M, mask=2, txt_name='Pi-L.txt')  # pi=3.14159265358979
+    noborder_1 = Example('Qr-1-noborder.png', 1, ERROR_CORRECT_H, mask=1)  # Ver1
+    noborder_2 = Example('Qr-2-noborder.png', 2, ERROR_CORRECT_L, mask=2, txt_name='Pi-L.txt')  # pi=3.14159265358979
 
-    kanji = Example('Qr-1-kanji.png', 1, ERROR_CORRECT_H, mask=2, txt_name='shintaka-Q.txt')  # 新高
-    alphanum = Example('Qr-2-alphanumeric.png', 2, ERROR_CORRECT_Q, mask=5, txt_name='HELLOW-H.txt')  # HELLO WORLD
-    numeric = Example('Qr-2-numeric.png', 2, ERROR_CORRECT_Q, mask=4, txt_name='nums-H.txt')  # 1112223330020159990
-    numeric_2 = Example('Qr-3-Numeric-Mod-2-M.gif', 3, ERROR_CORRECT_L, mask=4, txt_name='Numeric-Mod-2-M.txt')  # 55
-    url = Example('Qr-2-URL.jpg', 2, ERROR_CORRECT_M, mask=2, txt_name='URL-M.txt')  # http://google.co.tz
+    kanji = Example('Qr-1-kanji.png', 1, ERROR_CORRECT_Q, mask=2, txt_name='shintaka-Q.txt')  # 新高
+    alphanum = Example('Qr-2-alphanumeric.png', 2, ERROR_CORRECT_H, mask=5, txt_name='HELLOW-H.txt')  # HELLO WORLD
+    numeric = Example('Qr-2-numeric.png', 2, ERROR_CORRECT_H, mask=4, txt_name='nums-H.txt')  # 1112223330020159990
+    numeric_2 = Example('Qr-3-Numeric-Mod-2-M.gif', 3, ERROR_CORRECT_M, mask=4, txt_name='Numeric-Mod-2-M.txt')  # 55
+    url = Example('Qr-2-URL.jpg', 2, ERROR_CORRECT_L, mask=2, txt_name='URL-M.txt')  # http://google.co.tz
     # TODO: vCard-L doesn't match it's text file (text file version preferred). Should regenerate it (ewino@2016-01-30)
-    vcard = Example('Qr-8-vCard-L.jpg', 8, ERROR_CORRECT_M, mask=3, txt_name='vCard-L.txt')  # vCard
+    vcard = Example('Qr-8-vCard-L.jpg', 8, ERROR_CORRECT_L, mask=3, txt_name='vCard-L.txt')  # vCard
 
     broken_pattern_1 = Example('Qr-1-broken-pattern-1.png', 1, ERROR_CORRECT_Q, mask=1)  # top-left noise
     broken_pattern_2 = Example('Qr-1-broken-pattern-2.png', 1, ERROR_CORRECT_Q, mask=1)  # top-right noise
