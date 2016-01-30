@@ -1,7 +1,7 @@
 from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_MEDIUM, MODE_SIZE_LARGE, MODE_KANJI, MODE_ALPHA_NUM, \
     MODE_NUMBER, MODE_BYTES
 from qreader.exceptions import IllegalQrVersionError, QrFormatError
-from qreader.spec import get_mask_func, mode_sizes_for_version, bits_for_length, get_dead_zones
+from qreader.spec import get_mask_func, mode_sizes_for_version, bits_for_length, get_dead_zones, DATA_BLOCKS_INFO
 from tests.helpers import TestCase
 
 __author__ = 'ewino'
@@ -121,3 +121,26 @@ class TestDeadZones(TestCase):
         self.assertRaises(IllegalQrVersionError, lambda: get_dead_zones(0))
         self.assertRaises(IllegalQrVersionError, lambda: get_dead_zones(1.5))
         self.assertRaises(IllegalQrVersionError, lambda: get_dead_zones(41))
+
+
+class TestBlockInfo(TestCase):
+
+    def test_data_structure(self):
+        self.assertEqual(40, len(DATA_BLOCKS_INFO))
+        for version, ec_levels_info in enumerate(DATA_BLOCKS_INFO, start=1):
+            self.assertEqual(4, len(ec_levels_info))
+            for ec_level, data in enumerate(ec_levels_info):
+                self.assertIsInstance(data, tuple)
+                self.assertIn(len(data), (3, 4))
+                for datum in data:
+                    self.assertIsInstance(datum, int)
+
+    def test_data_amount_consistent_per_version(self):
+        for version, ec_levels_info in enumerate(DATA_BLOCKS_INFO, start=1):
+            data_amounts = set()
+            for level_info in ec_levels_info:
+                amount = (level_info[0] + level_info[1]) * level_info[2]
+                if len(level_info) > 3:
+                    amount += (level_info[0] + level_info[1] + 1) * level_info[3]
+                data_amounts.add(amount)
+            self.assertEqual(1, len(data_amounts))
