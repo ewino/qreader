@@ -47,7 +47,7 @@ class TestScanner(TestCase):
         self._assert_info(EXAMPLES.vcard)
 
     def test_jpg(self):
-        self._assert_info(EXAMPLES.simple_3)
+        # self._assert_info(EXAMPLES.simple_3)
         self._assert_info(EXAMPLES.url)
 
     def test_gif(self):

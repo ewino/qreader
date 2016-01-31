@@ -55,6 +55,12 @@ ALIGNMENT_POSITIONS = [
 ]
 
 
+PADDING_BY_VERSION = [0, 7, 7, 7, 7, 7, 0, 0, 0, 0,
+                      0, 0, 0, 3, 3, 3, 3, 3, 3, 3,
+                      4, 4, 4, 4, 4, 4, 4, 3, 3, 3,
+                      3, 3, 3, 3, 0, 0, 0, 0, 0, 0]
+
+
 DATA_BLOCKS_INFO = [
     # For each version: L, M, Q, H: (EC bytes, block size, blocks count, large blocks count)
     ((7, 19, 1), (10, 16, 1), (13, 13, 1), (17, 9, 1)),  # v1

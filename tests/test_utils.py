@@ -1,4 +1,5 @@
-from qreader.utils import is_rect_overlapping, is_range_overlapping
+from qreader.utils import is_rect_overlapping, is_range_overlapping, ints_to_bytes, bytes_to_ints, bits_to_ints, \
+    ints_to_bits
 from tests.helpers import TestCase
 
 __author__ = 'ewino'
@@ -65,3 +66,62 @@ class TestOverlap(TestCase):
         # [-------]
         # [_______]
         self.assertFalse(is_rect_overlapping((1, 1, 4, 4), (1, 5, 4, 8)))
+
+
+class TestIntsToBytes(TestCase):
+    def test_normal(self):
+        self.assertEqual('Hello', ints_to_bytes([72, 101, 108, 108, 111]).decode('utf-8'))
+
+    def test_empty(self):
+        self.assertEqual(0, len(ints_to_bytes([])))
+
+
+class TestBytesToInts(TestCase):
+    def test_normal(self):
+        self.assertEqual([72, 101, 108, 108, 111], bytes_to_ints('Hello'.encode('utf-8')))
+
+    def test_empty(self):
+        self.assertEqual(0, len(bytes_to_ints([])))
+
+
+class TestBitsToInts(TestCase):
+    def test_default_params(self):
+        self.assertEqual([], bits_to_ints([]))
+        self.assertEqual([0], bits_to_ints([0, 0, 0, 0, 0, 0, 0, 0]))
+        self.assertEqual([1], bits_to_ints([0, 0, 0, 0, 0, 0, 0, 1]))
+        self.assertEqual([2], bits_to_ints([0, 0, 0, 0, 0, 0, 1, 0]))
+        self.assertEqual([7], bits_to_ints([0, 0, 0, 0, 0, 1, 1, 1]))
+        self.assertEqual([0, 1, 2], bits_to_ints([0, 0, 0, 0, 0, 0, 0, 0,
+                                                  0, 0, 0, 0, 0, 0, 0, 1,
+                                                  0, 0, 0, 0, 0, 0, 1, 0]))
+
+    def test_with_offset(self):
+        self.assertEqual([0], bits_to_ints([0, 0, 0, 0, 0, 0, 0, 0, 0], offset=1))
+        self.assertEqual([2], bits_to_ints([0, 0, 0, 0, 0, 0, 0, 1, 0], offset=1))
+
+    def test_with_different_int_size(self):
+        self.assertEqual([0, 1, 0, 1, 1, 1], bits_to_ints([0, 1, 0, 1, 1, 1], bits_in_byte=1))
+        self.assertEqual([0, 1, 2, 3, 4], bits_to_ints([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0], bits_in_byte=3))
+
+    def test_with_both(self):
+        self.assertEqual([2, 1, 0], bits_to_ints([0, 1, 0, 0, 1, 0, 0], bits_in_byte=2, offset=1))
+
+
+class TestIntsToBits(TestCase):
+    def test_normal(self):
+        self.assertEqual([], ints_to_bits([]))
+        self.assertEqual([0, 0, 0, 0, 0, 0, 0, 0], ints_to_bits([0]))
+        self.assertEqual([0, 0, 0, 0, 0, 0, 0, 1], ints_to_bits([1]))
+        self.assertEqual([0, 0, 0, 0, 0, 0, 1, 0], ints_to_bits([2]))
+        self.assertEqual([0, 0, 0, 0, 0, 1, 1, 1], ints_to_bits([7]))
+        self.assertEqual([0, 0, 0, 0, 0, 0, 0, 0,
+                          0, 0, 0, 0, 0, 0, 0, 1,
+                          0, 0, 0, 0, 0, 0, 1, 0], ints_to_bits([0, 1, 2]))
+        self.assertEqual([1] * 8, ints_to_bits([0xff]))
+
+    def test_exceeding_size(self):
+        self.assertEqual([0, 0, 0, 0, 0, 0, 0, 1], ints_to_bits([0x101]))
+
+    def test_with_different_bits_amount(self):
+        self.assertEqual([0, 1, 0, 1, 1, 1], ints_to_bits([0, 1, 0, 1, 1, 1], bits_in_byte=1))
+        self.assertEqual([0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0], ints_to_bits([0, 1, 2, 3, 4], bits_in_byte=3))
