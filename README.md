@@ -16,15 +16,15 @@ Features left to be implemented:
 
 Usage
 -----------
-    qreader.read(local_path_or_pillow_image)
-    
+    qreader.read(source)  # source can be a file-like object, a PIL image, or a path to a local file
+
 For example:
 
     import qreader
     from urllib.request import urlopen
     
     url = 'https://upload.wikimedia.org/wikipedia/commons/8/8f/Qr-2.png'
-
-    print(qreader.read(urlopen(url)))  # prints "Version 2"
+    data = qreader.read(urlopen(url))
+    print(data)  # prints "Version 2"
     
 Any ideas or issues will be gladly received in the issues panel or by PMing me (ewino)
