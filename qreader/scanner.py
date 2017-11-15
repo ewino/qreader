@@ -82,7 +82,7 @@ class ImageScanner(Scanner):
     def get_mask(self):
         mask_func = get_mask_func(self.info.mask_id)
         return {(x, y): 1 if mask_func(y, x) else 0 for x in range(self.info.size) for y in range(self.info.size)}
-
+    
     def read_info(self):
         info = QRCodeInfo()
         info.canvas = self.get_image_borders()
@@ -93,9 +93,14 @@ class ImageScanner(Scanner):
         self._read_format_info()
         self.mask = self.get_mask()
         return info
-
+    
     def _get_pixel(self, coords):
-        return 1 if self.image.getpixel(coords) < 128 else 0
+        try:
+            if self.image.getpixel(coords) < 128:
+                return 1
+        except IndexError:
+            pass
+        return 0
 
     def get_image_borders(self):
         def get_corner_pixel(canvas_corner, vector, max_distance):
