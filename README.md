@@ -1,5 +1,5 @@
 # qreader
-A pure python reader for QR codes. Made to be compatible to Python 2.7 to 3.5+.
+A pure python reader for QR codes. Made to be compatible to Python 2.7 to 3.6+.
 
 We use the easy-to-install Pillow package to load the pictures, so lots of picture formats are supported.
 
