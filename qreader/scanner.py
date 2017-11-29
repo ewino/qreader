@@ -96,11 +96,9 @@ class ImageScanner(Scanner):
     
     def _get_pixel(self, coords):
         try:
-            if self.image.getpixel(coords) < 128:
-                return 1
+            return BLACK if self.image.getpixel(coords) < 128 else WHITE
         except IndexError:
-            pass
-        return 0
+            return WHITE
 
     def get_image_borders(self):
         def get_corner_pixel(canvas_corner, vector, max_distance):
