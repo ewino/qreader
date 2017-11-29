@@ -25,6 +25,7 @@ class TestScanner(TestCase):
         self.assertEqual((0, 0, 199, 199), self._get_res_scanner(EXAMPLES.noborder_2).info.canvas)
         self.assertEqual((36, 36, 182, 182), self._get_res_scanner(EXAMPLES.simple_1).info.canvas)
         self.assertEqual((35, 35, 184, 184), self._get_res_scanner(EXAMPLES.simple_2).info.canvas)
+        self.assertEqual((14, 14, 235, 235), self._get_res_scanner(EXAMPLES.transparent_border).info.canvas)
 
     def test_broken_canvas_sizes(self):
         self.assertRaisesMsg(QrImageRecognitionException, self._get_res_scanner(EXAMPLES.broken_pattern_1).read,
@@ -45,6 +46,7 @@ class TestScanner(TestCase):
         self._assert_info(EXAMPLES.numeric)
         self._assert_info(EXAMPLES.alphanum)
         self._assert_info(EXAMPLES.vcard)
+        self._assert_info(EXAMPLES.transparent_border)
 
     def test_jpg(self):
         self._assert_info(EXAMPLES.simple_3)

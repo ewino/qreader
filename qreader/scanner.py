@@ -66,7 +66,10 @@ class Scanner(object):
 
     def __iter__(self):
         while True:
-            yield self.read_bit()
+            try:
+                yield self.read_bit()
+            except StopIteration:
+                return
 
 
 class ImageScanner(Scanner):
@@ -76,7 +79,7 @@ class ImageScanner(Scanner):
         :return:
         """
         super(ImageScanner, self).__init__()
-        self.image = image.convert('L')  # gray-scale it baby!
+        self.image = image.convert('LA')  # gray-scale it baby!
         self.mask = None
 
     def get_mask(self):
@@ -96,7 +99,8 @@ class ImageScanner(Scanner):
     
     def _get_pixel(self, coords):
         try:
-            return BLACK if self.image.getpixel(coords) < 128 else WHITE
+            shade, alpha = self.image.getpixel(coords)
+            return BLACK if shade < 128 and alpha > 0 else WHITE
         except IndexError:
             return WHITE
 
@@ -131,12 +135,12 @@ class ImageScanner(Scanner):
         pattern_size = 7
 
         left, top = img_start
-        block_height, block_width = 0, 0
-        for i in range(1, self.image.width - left):
+        block_height, block_width = None, None
+        for i in range(1, (self.image.width - left) // pattern_size):
             if self._get_pixel((left + i * pattern_size, top)) == WHITE:
                 block_width = i
                 break
-        for i in range(1, self.image.height - top):
+        for i in range(1, (self.image.height - top) // pattern_size):
             if self._get_pixel((left, top + i * pattern_size)) == WHITE:
                 block_height = i
                 break

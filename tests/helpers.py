@@ -48,6 +48,7 @@ class EXAMPLES:
 
     noborder_1 = Example('Qr-1-noborder.png', 1, ERROR_CORRECT_H, mask=1)  # Ver1
     noborder_2 = Example('Qr-2-noborder.png', 2, ERROR_CORRECT_L, mask=2, txt_name='Pi-L.txt')  # pi=3.14159265358979
+    transparent_border = Example('QR-5-transparent-edges.png', 5, ERROR_CORRECT_H, mask=1)  # ???
 
     kanji = Example('Qr-1-kanji.png', 1, ERROR_CORRECT_Q, mask=2, txt_name='shintaka-Q.txt')  # 新高
     alphanum = Example('Qr-2-alphanumeric.png', 2, ERROR_CORRECT_H, mask=5, txt_name='HELLOW-H.txt')  # HELLO WORLD
@@ -70,4 +71,4 @@ class TestCase(BaseTestCase):
     def assertRaisesMsg(self, exc_type, func, exc_msg, *args, **kwargs):
         with self.assertRaises(exc_type) as cm:
             func(*args, **kwargs)
-        self.assertEquals(cm.exception.args[0], exc_msg)
+        self.assertEqual(cm.exception.args[0], exc_msg)

@@ -28,8 +28,8 @@ class TestVCardFromText(TestCase):
         vCard.from_text('BEGIN:VCARD\nVERSION:4\nEND:VCARD')
 
     def test_date_fields(self):
-        self.assertEquals(datetime(2015, 8, 28, tzinfo=tzutc()),
-                          vCard.from_text('BEGIN:VCARD\nANNIVERSARY:20150828T000000Z\nEND:VCARD').anniversary)
+        self.assertEqual(datetime(2015, 8, 28, tzinfo=tzutc()),
+                         vCard.from_text('BEGIN:VCARD\nANNIVERSARY:20150828T000000Z\nEND:VCARD').anniversary)
 
     def test_complex_fields(self):
         card = vCard.from_text('BEGIN:VCARD\n'
@@ -37,10 +37,10 @@ class TestVCardFromText(TestCase):
                                'ADR;TYPE=WORK:;;100 Waters Edge;Baytown;LA;30314;United States of America\n'
                                'CATEGORIES:swimmer,biker\n'
                                'END:VCARD')
-        self.assertEquals(1, len(card.phones))
-        self.assertEquals(('WORK,VOICE', '(111) 555-1212'), card.phones[0])
-        self.assertEquals(1, len(card.addresses))
-        self.assertEquals(('WORK', '', '', '100 Waters Edge', 'Baytown', 'LA', '30314', 'United States of America'),
-                          card.addresses[0])
-        self.assertEquals(2, len(card.categories))
-        self.assertEquals(['swimmer', 'biker'], card.categories)
+        self.assertEqual(1, len(card.phones))
+        self.assertEqual(('WORK,VOICE', '(111) 555-1212'), card.phones[0])
+        self.assertEqual(1, len(card.addresses))
+        self.assertEqual(('WORK', '', '', '100 Waters Edge', 'Baytown', 'LA', '30314', 'United States of America'),
+                         card.addresses[0])
+        self.assertEqual(2, len(card.categories))
+        self.assertEqual(['swimmer', 'biker'], card.categories)

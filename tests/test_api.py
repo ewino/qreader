@@ -13,7 +13,8 @@ class TestRead(TestCase):
         read(EXAMPLES.simple_1.img_res_path)
 
     def test_with_file(self):
-        read(open(EXAMPLES.simple_1.img_res_path, 'rb'))
+        with open(EXAMPLES.simple_1.img_res_path, 'rb') as f:
+            read(f)
 
     def test_with_weird_values(self):
         for val in (None, ['bread', 'eggs', 'sugar'], TestRead, six.moves.xrange(12)):
