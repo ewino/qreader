@@ -1,5 +1,5 @@
+from .helpers import TestCase
 from qreader.utils import is_rect_overlapping, is_range_overlapping
-from tests.helpers import TestCase
 
 __author__ = 'ewino'
 

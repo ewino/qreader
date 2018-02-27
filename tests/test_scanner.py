@@ -1,6 +1,6 @@
 from qreader.exceptions import QrImageRecognitionException
 from qreader.scanner import ImageScanner, Scanner
-from tests.helpers import TestCase, EXAMPLES
+from .helpers import TestCase, EXAMPLES
 
 __author__ = 'ewino'
 
@@ -9,7 +9,7 @@ class TestScanner(TestCase):
 
     def _get_res_scanner(self, res):
         """
-        :type res: tests.helpers.Example
+        :type res: .helpers.Example
         :rtype: qreader.scanner.ImageScanner
         """
         return ImageScanner(res.get_img_res())

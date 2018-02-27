@@ -2,8 +2,8 @@ from datetime import datetime
 
 from dateutil.tz import tzutc
 
+from .helpers import TestCase
 from qreader.vcard import vCard
-from tests.helpers import TestCase
 
 # The things we do to increase test coverage...
 # and it's a temporary module too!

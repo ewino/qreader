@@ -1,7 +1,7 @@
 from io import BufferedIOBase
 
-import six
 import PIL.Image
+import six
 
 from qreader.decoder import QRDecoder
 from qreader.scanner import ImageScanner

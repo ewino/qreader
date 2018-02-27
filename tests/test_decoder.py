@@ -1,12 +1,11 @@
 # encoding=utf-8
 
-from qreader.constants import MODE_ECI, MODE_STRUCTURED_APPEND, ERROR_CORRECT_L, ERROR_CORRECT_M, ERROR_CORRECT_Q, \
-    ERROR_CORRECT_H
+from qreader.constants import MODE_ECI, MODE_STRUCTURED_APPEND
 from qreader.decoder import QRDecoder
 from qreader.exceptions import IllegalQrMessageModeId
 from qreader.scanner import QRCodeInfo, Scanner
+from .helpers import TestCase, EXAMPLES
 from qreader.vcard import vCard
-from tests.helpers import TestCase, EXAMPLES
 
 __author__ = 'ewino'
 
@@ -31,7 +30,7 @@ class TextFileScanner(Scanner):
 class TestDecoder(TestCase):
     def _get_decoder(self, res):
         """
-        :type res: tests.helpers.Example
+        :type res: .helpers.Example
         :rtype: QRDecoder
         """
         return QRDecoder(TextFileScanner(res.txt_res_path, res.version, res.ec_mode))
