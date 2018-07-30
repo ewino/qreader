@@ -48,7 +48,7 @@ class EXAMPLES:
 
     noborder_1 = Example('Qr-1-noborder.png', 1, ERROR_CORRECT_H, mask=1)  # Ver1
     noborder_2 = Example('Qr-2-noborder.png', 2, ERROR_CORRECT_L, mask=2, txt_name='Pi-L.txt')  # pi=3.14159265358979
-    transparent_border = Example('QR-5-transparent-edges.png', 5, ERROR_CORRECT_H, mask=1)  # ???
+    transparent_border = Example('Qr-5-transparent-edges.png', 5, ERROR_CORRECT_H, mask=1)  # ???
 
     kanji = Example('Qr-1-kanji.png', 1, ERROR_CORRECT_Q, mask=2, txt_name='shintaka-Q.txt')  # 新高
     alphanum = Example('Qr-2-alphanumeric.png', 2, ERROR_CORRECT_H, mask=5, txt_name='HELLOW-H.txt')  # HELLO WORLD
