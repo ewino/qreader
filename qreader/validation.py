@@ -1,6 +1,5 @@
 from qreader.exceptions import QrCorruptError
-from qreader.spec import FORMAT_INFO_BCH_GENERATOR, DATA_BLOCKS_INFO
-from reedsolo import RSCodec
+from qreader.spec import FORMAT_INFO_BCH_GENERATOR
 
 __author__ = 'ewino'
 

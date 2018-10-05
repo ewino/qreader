@@ -1,7 +1,8 @@
 from itertools import permutations
+
+from qreader.constants import MODE_SIZE_MEDIUM
 from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_LARGE, ERROR_CORRECT_L, ERROR_CORRECT_M, ERROR_CORRECT_Q, \
     ERROR_CORRECT_H
-from qreader.constants import MODE_SIZE_MEDIUM
 from qreader.exceptions import QrFormatError, IllegalQrVersionError
 from qreader.utils import is_rect_overlapping
 

@@ -4,6 +4,7 @@ import os
 from unittest import TestCase as BaseTestCase
 
 from PIL import Image
+
 from qreader.constants import ERROR_CORRECT_L, ERROR_CORRECT_M, ERROR_CORRECT_Q, ERROR_CORRECT_H
 
 
@@ -40,7 +41,7 @@ class Example(object):
         return os.path.join(os.path.dirname(__file__), 'resources', 'decoder', self.txt_name)
 
 
-class EXAMPLES:
+class EXAMPLES(object):
     simple_1 = Example('Qr-1.png', 1, ERROR_CORRECT_H, mask=1)  # Ver1
     simple_2 = Example('Qr-2.png', 2, ERROR_CORRECT_H, mask=2, txt_name='Version2.txt')  # Version 2
     # TODO: LATIN-L doesn't match it's text file (text file version preferred). Should regenerate it (ewino@2016-01-30)

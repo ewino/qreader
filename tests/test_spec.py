@@ -2,7 +2,7 @@ from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_MEDIUM, MODE_SIZE_LARGE
     MODE_NUMBER, MODE_BYTES
 from qreader.exceptions import IllegalQrVersionError, QrFormatError
 from qreader.spec import get_mask_func, mode_sizes_for_version, bits_for_length, get_dead_zones, DATA_BLOCKS_INFO
-from tests.helpers import TestCase
+from .helpers import TestCase
 
 __author__ = 'ewino'
 

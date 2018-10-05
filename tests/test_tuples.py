@@ -1,5 +1,5 @@
 from qreader import tuples
-from tests.helpers import TestCase
+from .helpers import TestCase
 
 __author__ = 'ewino'
 

@@ -2,7 +2,7 @@ import six
 from PIL import Image
 
 from qreader.api import read
-from tests.helpers import TestCase, EXAMPLES
+from .helpers import TestCase, EXAMPLES
 
 
 class TestRead(TestCase):
