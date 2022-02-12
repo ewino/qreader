@@ -20,8 +20,8 @@ class TextFileScanner(Scanner):
 
     def read_info(self):
         self._info = QRCodeInfo()
-        self.info.version = self._version
-        self.info.error_correction_level = self._ec_level
+        self._info.version = self._version
+        self._info.error_correction_level = self._ec_level
 
     def _read_all_data(self):
         with open(self._data_path, 'r') as f:

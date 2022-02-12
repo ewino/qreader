@@ -3,7 +3,7 @@ from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_LARGE, ERROR_CORRECT_L,
     ERROR_CORRECT_H
 from qreader.constants import MODE_SIZE_MEDIUM
 from qreader.exceptions import QrFormatError, IllegalQrVersionError
-from qreader.utils import is_rect_overlapping
+from qreader.utils import is_rect_overlapping, bit_list_to_bytes, de_interleave_blocks, bytes_to_bit_list
 
 __author__ = 'ewino'
 
@@ -182,3 +182,59 @@ def get_dead_zones(version):
         if all(not is_rect_overlapping(alignment_zone, dead_zone) for dead_zone in constant_zones):
             alignments_zones.append(alignment_zone)
     return constant_zones + alignments_zones
+
+
+def reassemble_raw_data_blocks(raw_bit_data, version, ec_level):
+    """
+    Depending on the version and error correction level, the message is broken up into multiple blocks and interleaved
+    while encoding. So, after scanning the raw bits, we need to break up the blocks and de-interleave them before
+    decoding or attempting to correct errors.
+
+    :param raw_bit_data List of int-s representing the bits in the raw scanned data
+    :param version QR Code version
+    :param ec_level Error correction level
+    """
+
+    raw_byte_data = bit_list_to_bytes(raw_bit_data, bits_in_a_byte=8)
+
+    block_info = DATA_BLOCKS_INFO[version - 1][ec_level]
+    large_blocks = 0
+    try:
+        ec_size, data_size, block_count = block_info
+    except:
+        ec_size, data_size, block_count, large_blocks = block_info
+        raise NotImplementedError(
+            'Large blocks not yet implemented: version=%s | ec-level=%s | block_info=%s'%(
+                version, ec_level, block_info
+            )
+        )
+
+    if block_count == 1:
+        # Nothing to do
+        return raw_bit_data
+
+    ncodewords = (ec_size + data_size) * block_count
+
+    # print(len(raw_byte_data))
+    # print(', '.join(str(hex(int(v))) for v in raw_byte_data))
+
+    if len(raw_byte_data) > ncodewords:
+        # Truncate to Capacity as per spec
+        # print('Truncating to ', ncodewords)
+        raw_byte_data = raw_byte_data[:ncodewords]
+
+    n_data_blocks = data_size * block_count
+    n_ec_blocks = ec_size * block_count
+
+    data_blocks = raw_byte_data[:n_data_blocks]
+    ec_blocks = raw_byte_data[:n_ec_blocks]
+
+    i_data_blocks = de_interleave_blocks(data_blocks, block_count)
+    i_ec_blocks = de_interleave_blocks(ec_blocks, block_count)
+
+    reassembled_bytes = i_data_blocks + i_ec_blocks
+
+    reassembled_bits = bytes_to_bit_list(reassembled_bytes, bits_in_a_byte=8)
+
+    return reassembled_bits
+

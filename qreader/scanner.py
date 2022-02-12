@@ -1,8 +1,14 @@
-from collections import Iterator
+import math
+
+try:
+    from collections import Iterator
+except ImportError:
+    from collections.abc import Iterator
 
 from qreader import tuples
 from qreader.exceptions import QrImageRecognitionException
-from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones, ec_level_from_format_info_code
+from qreader.spec import get_mask_func, FORMAT_INFO_MASK, get_dead_zones, ec_level_from_format_info_code, \
+    reassemble_raw_data_blocks
 from qreader.validation import validate_format_info, validate_data
 
 __author__ = 'ewino'
@@ -24,14 +30,19 @@ class Scanner(object):
         """ The meta info for the QR code. Reads the code on access if needed.
         :rtype: QRCodeInfo
         """
-        if not self._was_read:
-            self.read()
+        # if not self._was_read:
+        #     self.read()
+        self.read_info()
         return self._info
 
     def read(self):
         self._was_read = True
         self.read_info()
-        self.data = validate_data(self._read_all_data(), self.info.version, self.info.error_correction_level)
+
+        raw_bit_data = self._read_all_data()
+        reassembled_bit_data = reassemble_raw_data_blocks(raw_bit_data, self.info.version, self.info.error_correction_level)
+
+        self.data = validate_data(reassembled_bit_data, self.info.version, self.info.error_correction_level)
         self._data_len = len(self.data)
         self.reset()
 
@@ -87,16 +98,79 @@ class ImageScanner(Scanner):
         return {(x, y): 1 if mask_func(y, x) else 0 for x in range(self.info.size) for y in range(self.info.size)}
     
     def read_info(self):
-        info = QRCodeInfo()
-        info.canvas = self.get_image_borders()
-        info.block_size = self.get_block_size(info.canvas[:2])
-        info.size = int((info.canvas[2] - (info.canvas[0]) + 1) / info.block_size[0])
-        info.version = (info.size - 17) // 4
-        self._info = info
-        self._read_format_info()
-        self.mask = self.get_mask()
-        return info
-    
+        if not self._info:
+            info = QRCodeInfo()
+            info.canvas = self.get_image_borders()
+            info.block_size = self.get_block_size(info.canvas[:2])
+            info.size = math.ceil((info.canvas[2] - (info.canvas[0]) + 1) / info.block_size[0])
+            info.version = (info.size - 17) // 4
+            self._info = info
+            self._read_format_info()
+            self.mask = self.get_mask()
+
+            # print('QR Info: ', self.info)
+
+            # self._build_all_orig_bits_grid()
+            # print('Original bits from image:')
+            # print(self.info.size, self.info.size)
+            # self.print_bit_grid(self._all_orig_bits_grid)
+
+            # self._build_all_masked_bits_grid()
+            # print('Unmasked bits from image:')
+            # print(self.info.size, self.info.size)
+            # self.print_bit_grid(self._all_masked_bits_grid)
+
+        return self._info
+
+    def _build_all_orig_bits_grid(self):
+        """
+        Added for debugging. Builds a grid of 0's and 1's from the image
+        """
+        all_bits = []
+        for y in range(self.info.size):
+            row_bits = 0
+            for x in range(self.info.size):
+                xy_bit = self._get_pixel(tuples.add(self.info.canvas[:2], tuples.multiply((x, y), self.info.block_size)))
+                row_bits = (row_bits << 1) + xy_bit
+
+            all_bits.append(row_bits)
+
+        self._all_orig_bits_grid = all_bits
+
+    def _build_all_masked_bits_grid(self):
+        """
+        Added for debugging - Builds a new grid of 0's and 1's by applying mask on
+        the grid of 0's and 1's built by _build_all_orig_bits_grid() method
+        """
+        ignored_pos = {(x, y) for zone in get_dead_zones(self.info.version)
+                            for x in range(zone[0], zone[2] + 1)
+                            for y in range(zone[1], zone[3] + 1)}
+
+        all_bits_masked = []
+
+        # Apply mask on all original bits grid
+        for y in range(self.info.size):
+            masked_row_bits = 0
+            for x in range(self.info.size):
+                xy_bit = self._get_bit((x, y))
+                if (x, y) not in ignored_pos:
+                    xy_bit ^= self.mask[(x, y)]
+                masked_row_bits = (masked_row_bits << 1) + xy_bit
+
+            all_bits_masked.append(masked_row_bits)
+
+        # TODO Later Apply format-info mask on format info bits
+        self._all_masked_bits_grid = all_bits_masked
+
+    def print_bit_grid(self, bit_grid):
+        """
+        Added for debugging - print the given grid of 0's and 1's
+        """
+        for y in range(self.info.size):
+            row_bits = bit_grid[y]
+            row_bits_str = f'{row_bits:0{self.info.size}b}'
+            print(' '.join([c for c in row_bits_str]))
+
     def _get_pixel(self, coords):
         try:
             shade, alpha = self.image.getpixel(coords)

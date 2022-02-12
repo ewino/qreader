@@ -7,6 +7,7 @@ ERROR_CORRECT_Q = 2
 ERROR_CORRECT_H = 3
 
 # QR encoding modes (based on qrcode package)
+MODE_ZERO = 0
 MODE_NUMBER = 1
 MODE_ALPHA_NUM = 2
 MODE_BYTES = 4
