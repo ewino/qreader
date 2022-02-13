@@ -195,46 +195,47 @@ def reassemble_raw_data_blocks(raw_bit_data, version, ec_level):
     :param ec_level Error correction level
     """
     block_info = DATA_BLOCKS_INFO[version - 1][ec_level]
-    large_blocks = 0
+    large_block_count = 0
     try:
-        ec_size, data_size, block_count = block_info
+        ec_size, data_size, normal_block_count = block_info
     except:
-        ec_size, data_size, block_count, large_blocks = block_info
-        raise NotImplementedError(
-            'Large blocks not yet implemented: version=%s | ec-level=%s | block_info=%s'%(
+        ec_size, data_size, normal_block_count, large_block_count = block_info
+        print(
+            'Have large blocks to process: version=%s | ec-level=%s | block_info=%s'%(
                 version, ec_level, block_info
             )
         )
 
-    if block_count == 1:
+    if (normal_block_count + large_block_count) == 1:
         # Nothing to do
         return raw_bit_data
 
-    raw_byte_data = bit_list_to_bytes(raw_bit_data, bits_in_a_byte=8)
 
-    ncodewords = (ec_size + data_size) * block_count
-
-    if len(raw_byte_data) < ncodewords:
-        # TODO Not sure what to do if we get less data than the spec
-        # Possibly damaged QR - Will do a best effort decoding instead of simply failing
-        print(f'Expected {ncodewords} blocks of data for version={version}|ec-level={ec_level}|block-info={block_info} | Got only {len(raw_byte_data)} blocks')
-
-    # print(len(raw_byte_data))
-    # print(', '.join(str(hex(int(v))) for v in raw_byte_data))
+    ncodewords = (ec_size + data_size) * normal_block_count + (ec_size + data_size + 1) * large_block_count
+    n_codeword_bits = ncodewords * 8
 
     # TODO Not sure what to do if there is more data than the spec
     # TODO Should the extra data participate in the de-interleaving too?
     # For now, truncate to capacity as per spec, while storing the extra data
-    extra_data = raw_byte_data[ncodewords:]
-    raw_byte_data = raw_byte_data[:ncodewords]
+    extra_bits = raw_bit_data[n_codeword_bits:]
+    truncated_bit_data = raw_bit_data[:n_codeword_bits]
 
-    if extra_data:
+    if extra_bits:
         # We will add it to the re-assembled bytes in the endc
-        print('Truncated', len(extra_data) + ncodewords, 'bytes of raw data to', ncodewords, 'bytes')
-        ...
+        print('Truncated', len(extra_bits) + n_codeword_bits, 'bits of raw data to', n_codeword_bits, 'bits')
 
-    n_data_blocks = data_size * block_count
-    n_ec_blocks = ec_size * block_count
+    raw_byte_data = bit_list_to_bytes(truncated_bit_data, bits_in_a_byte=8)
+
+    if len(raw_byte_data) < ncodewords:
+        # TODO Not sure what to do if we get less data than the spec
+        # Possibly damaged QR - Will do a best effort decoding instead of simply failing
+        print(f'Expected {ncodewords} blocks for version={version}|ec-level={ec_level}|block-info={block_info} | Got only {len(raw_byte_data)} blocks')
+
+    # print(len(raw_byte_data))
+    # print(', '.join(str(hex(int(v))) for v in raw_byte_data))
+
+    n_data_blocks = data_size * normal_block_count + (data_size + 1) * large_block_count
+    n_ec_blocks = ec_size * (normal_block_count + large_block_count)
 
     # print('Number of data blocks as per spec:', n_data_blocks)
     # print('Number of EC blocks:', n_ec_blocks)
@@ -248,19 +249,46 @@ def reassemble_raw_data_blocks(raw_bit_data, version, ec_level):
     # print('Actual number of data blocks:', len(data_blocks))
     # print('Actual number of EC blocks:', len(ec_blocks))
 
-    d_data_blocks = de_interleave_blocks(data_blocks, block_count)
-    d_ec_blocks = de_interleave_blocks(ec_blocks, block_count)
+    _blk_padding_obj = object()
+    if large_block_count:
+        data_blocks = pad_normal_data_blocks(data_blocks, normal_block_count, large_block_count, _blk_padding_obj)
+
+    d_data_blocks = de_interleave_blocks(data_blocks, normal_block_count+large_block_count)
+    d_ec_blocks = de_interleave_blocks(ec_blocks, normal_block_count+large_block_count)
+
+    if large_block_count:
+        d_data_blocks = remove_padding(d_data_blocks, _blk_padding_obj)
 
     reassembled_bytes = d_data_blocks + d_ec_blocks
 
-    if extra_data:
-        # Add the extra data back
-        reassembled_bytes += extra_data
-
     reassembled_bits = bytes_to_bit_list(reassembled_bytes, bits_in_a_byte=8)
 
+    if extra_bits:
+        # Add the extra bits data back
+        reassembled_bits += extra_bits
+
+
     if len(reassembled_bits) != len(raw_bit_data):
-        raise Exception('Something wrong')
+        raise Exception('Something wrong - output bits %s != input bits %s'%(
+                len(reassembled_bits), len(raw_bit_data)
+        ))
 
     return reassembled_bits
+
+
+def pad_normal_data_blocks(data_blocks, normal_block_count, large_block_count, pad_with_obj):
+    data_blocks_copy = list(data_blocks)
+
+    overshooting_large_block_items = data_blocks_copy[-large_block_count:]
+    data_blocks_copy = data_blocks_copy[:-large_block_count]
+
+    data_blocks_copy += [pad_with_obj] * normal_block_count
+    data_blocks_copy += overshooting_large_block_items
+
+    return data_blocks_copy
+
+
+def remove_padding(blocks, padding_obj):
+    unpadded_blocks = [blk for blk in blocks if blk != padding_obj]
+    return unpadded_blocks
 
