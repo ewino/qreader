@@ -194,9 +194,6 @@ def reassemble_raw_data_blocks(raw_bit_data, version, ec_level):
     :param version QR Code version
     :param ec_level Error correction level
     """
-
-    raw_byte_data = bit_list_to_bytes(raw_bit_data, bits_in_a_byte=8)
-
     block_info = DATA_BLOCKS_INFO[version - 1][ec_level]
     large_blocks = 0
     try:
@@ -213,28 +210,57 @@ def reassemble_raw_data_blocks(raw_bit_data, version, ec_level):
         # Nothing to do
         return raw_bit_data
 
+    raw_byte_data = bit_list_to_bytes(raw_bit_data, bits_in_a_byte=8)
+
     ncodewords = (ec_size + data_size) * block_count
+
+    if len(raw_byte_data) < ncodewords:
+        # TODO Not sure what to do if we get less data than the spec
+        # Possibly damaged QR - Will do a best effort decoding instead of simply failing
+        print(f'Expected {ncodewords} blocks of data for version={version}|ec-level={ec_level}|block-info={block_info} | Got only {len(raw_byte_data)} blocks')
 
     # print(len(raw_byte_data))
     # print(', '.join(str(hex(int(v))) for v in raw_byte_data))
 
-    if len(raw_byte_data) > ncodewords:
-        # Truncate to Capacity as per spec
-        # print('Truncating to ', ncodewords)
-        raw_byte_data = raw_byte_data[:ncodewords]
+    # TODO Not sure what to do if there is more data than the spec
+    # TODO Should the extra data participate in the de-interleaving too?
+    # For now, truncate to capacity as per spec, while storing the extra data
+    extra_data = raw_byte_data[ncodewords:]
+    raw_byte_data = raw_byte_data[:ncodewords]
+
+    if extra_data:
+        # We will add it to the re-assembled bytes in the endc
+        print('Truncated', len(extra_data) + ncodewords, 'bytes of raw data to', ncodewords, 'bytes')
+        ...
 
     n_data_blocks = data_size * block_count
     n_ec_blocks = ec_size * block_count
 
+    # print('Number of data blocks as per spec:', n_data_blocks)
+    # print('Number of EC blocks:', n_ec_blocks)
+
+    # First we have the data blocks
     data_blocks = raw_byte_data[:n_data_blocks]
-    ec_blocks = raw_byte_data[:n_ec_blocks]
 
-    i_data_blocks = de_interleave_blocks(data_blocks, block_count)
-    i_ec_blocks = de_interleave_blocks(ec_blocks, block_count)
+    # The rest are the error correction blocks
+    ec_blocks = raw_byte_data[n_data_blocks:(n_data_blocks+n_ec_blocks)]
 
-    reassembled_bytes = i_data_blocks + i_ec_blocks
+    # print('Actual number of data blocks:', len(data_blocks))
+    # print('Actual number of EC blocks:', len(ec_blocks))
+
+    d_data_blocks = de_interleave_blocks(data_blocks, block_count)
+    d_ec_blocks = de_interleave_blocks(ec_blocks, block_count)
+
+    reassembled_bytes = d_data_blocks + d_ec_blocks
+
+    if extra_data:
+        # Add the extra data back
+        reassembled_bytes += extra_data
 
     reassembled_bits = bytes_to_bit_list(reassembled_bytes, bits_in_a_byte=8)
+
+    if len(reassembled_bits) != len(raw_bit_data):
+        raise Exception('Something wrong')
 
     return reassembled_bits
 

@@ -65,7 +65,7 @@ class TestDecoder(TestCase):
 
     def test_vcard(self):
         card = self._get_decoder(EXAMPLES.vcard).get_first()
-        self.assertTrue(vCard, type(card))
+        self.assertIsInstance(card, vCard)
         self.assertEqual(('Blabla', 'Bla Bla'), card.name)
         self.assertEqual(('CELL', '123456789'), card.phones[0])
 

@@ -51,6 +51,24 @@ def bytes_to_bit_list(byte_data, bits_in_a_byte=8):
     return bit_data
 
 
+def chunk(data, chunk_size):
+    chunks = []
+
+    data_copy = data[:]
+    while data_copy:
+        chunks.append(data_copy[:chunk_size])
+        data_copy = data_copy[chunk_size:]
+
+    return chunks
+
+
+def zip_and_chain(data):
+    z = list(zip(*data))
+    c = list(chain(*z))
+
+    return c
+
+
 def interleave_blocks(blocks, n):
     """
     Useful for encoding.
@@ -60,16 +78,22 @@ def interleave_blocks(blocks, n):
     :param bytes blocks: The data blocks
     :param int n: Block count as per the QR spec
     """
-    chunks = []
-    chunk_size = int(len(blocks)/n)
 
-    for i in range(n):
-        chunks.append(blocks[i*chunk_size:(i+1)*chunk_size])
+    _padding_object = object()
+    # print(f'Interleaving {len(blocks)} blocks at QR block size interval {n}')
 
-    interleaved_blocks = []
-    for i in range(chunk_size):
-        for chunk in chunks:
-            interleaved_blocks.append(chunk[i])
+    blocks_copy = list(blocks)  # Make a copy; Force it to be a list
+    rem = len(blocks_copy) % n
+    if  rem != 0:
+        # Pad list with padding object if size is not exactly divisible by n
+        blocks_copy += [_padding_object] * (n - rem)
+
+    chunk_size = int(len(blocks_copy)/n)
+    chunks = chunk(blocks_copy, chunk_size)
+    interleaved_blocks = zip_and_chain(chunks)
+
+    # Remove the padding
+    interleaved_blocks = [blk for blk in interleaved_blocks if blk != _padding_object]
 
     if len(interleaved_blocks) != len(blocks):
         raise NotImplementedError('Unequal blocks or chunks not supported')
@@ -81,15 +105,31 @@ def de_interleave_blocks(blocks, n):
     """
     For n=2, given data like this - [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     return data like this - [1, 3, 5, 7, 9, 2, 4, 6, 8, 10]
+    :param bytes blocks: The data blocks
+    :param int n: Block count as per the QR spec
     """
-    blocks_copy = blocks[:]
-    chunks = []
-    while blocks_copy:
-        chunks.append(blocks_copy[:n])
-        blocks_copy = blocks_copy[n:]
+    _padding_object = object()
+    # print(f'De-interleaving {len(blocks)} blocks at QR block size interval {n}')
 
-    d_chunks = list(zip(*chunks))
-    de_interleaved_blocks = list(chain(*d_chunks))
+    blocks_copy = list(blocks)  # Make a copy; Force it to be a list
+
+    rem = len(blocks_copy) % n
+    if rem != 0:
+        # Pad list with padding object if size is not exactly divisible by n
+        blocks_copy += [_padding_object] * (n - rem)
+
+    chunk_size = n
+    chunks = chunk(blocks_copy, chunk_size)
+    de_interleaved_blocks = zip_and_chain(chunks)
+
+    # Remove the padding
+    de_interleaved_blocks = [blk for blk in de_interleaved_blocks if blk != _padding_object]
+
+    if len(de_interleaved_blocks) != len(blocks):
+        raise NotImplementedError(
+            'Unequal blocks or chunks not supported: input blocks = %s | output blocks = %s'%(
+                len(blocks), len(de_interleaved_blocks)
+        ))
 
     return de_interleaved_blocks
 
