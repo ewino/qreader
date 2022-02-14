@@ -205,13 +205,13 @@ def reassemble_raw_data_blocks(raw_bit_data, version, ec_level):
     large_block_count = 0
     try:
         ec_size, data_size, normal_block_count = block_info
-    except:
+    except ValueError:
         ec_size, data_size, normal_block_count, large_block_count = block_info
-        print(
-            'Have large blocks to process: version=%s | ec-level=%s | block_info=%s'%(
-                version, ec_level, block_info
-            )
-        )
+        # print(
+        #     'Have large blocks to process: version=%s | ec-level=%s | block_info=%s'%(
+        #         version, ec_level, block_info
+        #     )
+        # )
 
     if (normal_block_count + large_block_count) == 1:
         # Nothing to do
@@ -229,7 +229,8 @@ def reassemble_raw_data_blocks(raw_bit_data, version, ec_level):
 
     if extra_bits:
         # We will add it to the re-assembled bytes in the endc
-        print('Truncated', len(extra_bits) + n_codeword_bits, 'bits of raw data to', n_codeword_bits, 'bits')
+        # print('Truncated', len(extra_bits) + n_codeword_bits, 'bits of raw data to', n_codeword_bits, 'bits')
+        ...
 
     raw_byte_data = bit_list_to_bytes(truncated_bit_data, bits_in_a_byte=8)
 
