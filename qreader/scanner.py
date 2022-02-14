@@ -1,5 +1,7 @@
 import math
 
+from qreader.utils import print_bit_grid, save_bit_grid_as_pbm
+
 try:
     from collections import Iterator
 except ImportError:
@@ -108,17 +110,16 @@ class ImageScanner(Scanner):
             self._read_format_info()
             self.mask = self.get_mask()
 
-            # print('QR Info: ', self.info)
-
+            # print('QR Info: ', info)
             # self._build_all_orig_bits_grid()
             # print('Original bits from image:')
-            # print(self.info.size, self.info.size)
-            # self.print_bit_grid(self._all_orig_bits_grid)
+            # print_bit_grid(self._all_orig_bits_grid, info.size)
+            # save_bit_grid_as_pbm(self._all_orig_bits_grid, info.size, filename='debug-orig.pbm')
 
             # self._build_all_masked_bits_grid()
             # print('Unmasked bits from image:')
-            # print(self.info.size, self.info.size)
-            # self.print_bit_grid(self._all_masked_bits_grid)
+            # print_bit_grid(self._all_masked_bits_grid, info.size)
+            # save_bit_grid_as_pbm(self._all_masked_bits_grid, info.size, filename='debug-unmasked.pbm')
 
         return self._info
 
@@ -161,15 +162,6 @@ class ImageScanner(Scanner):
 
         # TODO Later Apply format-info mask on format info bits
         self._all_masked_bits_grid = all_bits_masked
-
-    def print_bit_grid(self, bit_grid):
-        """
-        Added for debugging - print the given grid of 0's and 1's
-        """
-        for y in range(self.info.size):
-            row_bits = bit_grid[y]
-            row_bits_str = f'{row_bits:0{self.info.size}b}'
-            print(' '.join([c for c in row_bits_str]))
 
     def _get_pixel(self, coords):
         try:

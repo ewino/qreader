@@ -110,11 +110,12 @@ class TestDeadZones(TestCase):
         self.assertEqual(self.REGULAR_ZONES_COUNT, len(get_dead_zones(1)))
 
     def test_alignment_patterns_amount(self):
-        amounts = sum(([p**2] * x for p, x in enumerate([1, 5, 7, 7, 7, 7, 6])), [])  # 1*0, 5*1, 7*9, 7*16, 7*25...
+        amounts = sum(([(p**2 - 3) if p >= 2 else p**2] * x for p, x in enumerate([1, 1, 4, 7, 7, 7, 7, 6])), [])  # 0*0, 1*1, 4*1, 7*6, 7*13, 7*22, 7*33, 6*39
         self.assertEqual(40, len(amounts))
         for version, amount in enumerate(amounts, start=1):
             regular_zones_count = self.REGULAR_ZONES_COUNT + (2 if version >= 7 else 0)
-            self.assertEqual(amount, len(get_dead_zones(version)) - regular_zones_count)
+            self.assertEqual(amount, len(get_dead_zones(version)) - regular_zones_count,
+                             f"Version {version}: Alignment pattern count mismatch. Expected {amount}")
 
     def test_illegal_versions(self):
         self.assertRaises(IllegalQrVersionError, lambda: get_dead_zones(-1))

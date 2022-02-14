@@ -13,11 +13,11 @@ FORMAT_INFO_BCH_GENERATOR = 0b10100110111
 
 ALIGNMENT_POSITIONS = [
     [],
-    [6, 18],
-    [6, 22],
-    [6, 26],
-    [6, 30],
-    [6, 34],
+    [18],
+    [22],
+    [26],
+    [30],
+    [34],
     [6, 22, 38],
     [6, 24, 42],
     [6, 26, 46],
@@ -168,6 +168,10 @@ def get_dead_zones(version):
         (8, 6, size - 9, 6),  # top timing array
         (6, 8, 6, size - 9)  # left timing array
     ]
+    timing_arrays = [
+        (8, 6, size - 9, 6),  # top timing array
+        (6, 8, 6, size - 9)  # left timing array
+    ]
 
     if version >= 7:
         constant_zones.append((size - 11, 0, size - 9, 5))  # top version info
@@ -177,9 +181,12 @@ def get_dead_zones(version):
     alignment_centers = list(permutations(ALIGNMENT_POSITIONS[version - 1], 2))
     alignment_centers.extend((x, x) for x in ALIGNMENT_POSITIONS[version - 1])
 
+    # Alignment zones can and do overlap with timing pattern bits for large QR codes
+    disallowed_zones = [zone for zone in constant_zones if zone not in timing_arrays]
+
     for center_x, center_y in alignment_centers:
         alignment_zone = (center_x - 2, center_y - 2, center_x + 2, center_y + 2)
-        if all(not is_rect_overlapping(alignment_zone, dead_zone) for dead_zone in constant_zones):
+        if all(not is_rect_overlapping(alignment_zone, dead_zone) for dead_zone in disallowed_zones):
             alignments_zones.append(alignment_zone)
     return constant_zones + alignments_zones
 

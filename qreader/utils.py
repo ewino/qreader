@@ -133,3 +133,29 @@ def de_interleave_blocks(blocks, n):
 
     return de_interleaved_blocks
 
+
+def print_bit_grid(bit_grid, size, margin=0, out=None):
+    """
+    Added for debugging - print the given grid of 0's and 1's
+    """
+    print(size+margin*2, size+margin*2, file=out)
+
+    if margin:
+        print('0 ' * (size+margin*2), file=out)
+        print('0 ' * (size+margin*2), file=out)
+
+    for y in range(size):
+        row_bits = bit_grid[y]
+        row_bits_str = '0'*margin + f'{row_bits:0{size}b}' + '0'*margin
+        print(' '.join([c for c in row_bits_str]), file=out)
+
+    if margin:
+        print('0 ' * (size+margin*2), file=out)
+        print('0 ' * (size+margin*2), file=out)
+
+
+def save_bit_grid_as_pbm(bit_grid, size, filename='debug.pbm'):
+    with open(filename, 'wt') as fd:
+        print('P1', file=fd)
+        print_bit_grid(bit_grid, size, margin=2, out=fd)
+
