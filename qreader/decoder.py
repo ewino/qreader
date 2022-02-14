@@ -10,8 +10,9 @@ __author__ = 'ewino'
 
 class QRDecoder(object):
 
-    def __init__(self, scanner):
+    def __init__(self, scanner, raw_in_bytes_mode=False):
         self.scanner = scanner
+        self._raw_in_bytes_mode = raw_in_bytes_mode
 
     @property
     def version(self):
@@ -84,6 +85,8 @@ class QRDecoder(object):
     def _decode_bytes_message(self):
         char_count = self.scanner.read_int(bits_for_length(self.version, MODE_BYTES))
         raw = ints_to_bytes(self.scanner.read_int(8) for _ in range(char_count))
+        if self._raw_in_bytes_mode:
+            return raw
         try:
             val = raw.decode('utf-8')
         except UnicodeDecodeError:
