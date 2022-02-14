@@ -182,14 +182,35 @@ class ImageScanner(Scanner):
                                                                       ('left', 'right')[vector[0] == -1]))
 
         max_dist = min(self.image.width, self.image.height)
+        self.image = self.image.crop((0, 0, max_dist, max_dist))
+
         min_x, min_y = get_corner_pixel((0, 0), (1, 1), max_dist)
-        max_x, max_x_y = get_corner_pixel((self.image.width - 1, 0), (-1, 1), max_dist)
-        max_y_x, max_y = get_corner_pixel((0, self.image.height - 1), (1, -1), max_dist)
+
+        max_x, max_x_y = get_corner_pixel((max_dist - 1, 0), (-1, 1), max_dist)
         if max_x_y != min_y:
             raise QrImageRecognitionException('Top-left position pattern not aligned with the top-right one')
+
+        # Since max_x & min_y are confirmed by now, let's crop the image upto max_x, and from min_y
+        self.image = self.image.crop((0, min_y, max_x+1, max_dist))
+        min_y = max_x_y = 0
+        max_dist = min(self.image.width, self.image.height)
+        self.image = self.image.crop((0, 0, max_dist, max_dist))
+
+        max_y_x, max_y = get_corner_pixel((0, max_dist - 1), (1, -1), max_dist)
         if max_y_x != min_x:
             raise QrImageRecognitionException('Top-left position pattern not aligned with the bottom-left one')
-        return min_x, min_y, max_x, max_y
+
+        self.image = self.image.crop((min_x, min_y, max_x+1, max_y+1))
+
+        max_x -= min_x
+        min_x = 0
+        max_y -= min_y
+        min_y = 0
+
+        if (min_x, min_y, max_x, max_y) != (0, 0, self.image.width - 1, self.image.height - 1):
+            raise QrImageRecognitionException('Image recognition failed')
+
+        return 0, 0, self.image.width - 1, self.image.height - 1
 
     def get_block_size(self, img_start):
         """
