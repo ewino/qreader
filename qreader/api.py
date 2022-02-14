@@ -11,7 +11,7 @@ __author__ = 'ewino'
 __all__ = ['read']
 
 
-def read(image_or_path):
+def read(image_or_path, raw_in_bytes_mode=False):
     """
     Accepts either a path to a file, a PIL image, or a file-like object and reads a QR code data from it.
     :param str|PIL.Image.Image|file|BufferedIOBase image_or_path: The source containing the QR code.
@@ -23,8 +23,9 @@ def read(image_or_path):
         image_or_path = PIL.Image.open(image_or_path)
     if isinstance(image_or_path, PIL.Image.Image):
         data = ImageScanner(image_or_path)
-        return QRDecoder(data).get_first()
-        # result = QRDecoder(data).get_all()
+        decoder = QRDecoder(data, raw_in_bytes_mode=raw_in_bytes_mode)
+        return decoder.get_first()
+        # result = decoder.get_all()
         # if len(result) == 0:
         #     return None
         # elif len(result) == 1:

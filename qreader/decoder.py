@@ -1,5 +1,5 @@
 from qreader.constants import MODE_NUMBER, MODE_ALPHA_NUM, ALPHANUM_CHARS, MODE_BYTES, MODE_KANJI, MODE_ECI, \
-    MODE_STRUCTURED_APPEND
+    MODE_STRUCTURED_APPEND, MODE_ZERO
 from qreader.exceptions import IllegalQrMessageModeId
 from qreader.spec import bits_for_length
 from qreader.utils import ints_to_bytes
@@ -10,8 +10,9 @@ __author__ = 'ewino'
 
 class QRDecoder(object):
 
-    def __init__(self, scanner):
+    def __init__(self, scanner, raw_in_bytes_mode=False):
         self.scanner = scanner
+        self._raw_in_bytes_mode = raw_in_bytes_mode
 
     @property
     def version(self):
@@ -21,7 +22,14 @@ class QRDecoder(object):
         return self._decode_next_message()
 
     def __iter__(self):
-        yield self._decode_next_message()
+        # yield self._decode_next_message()
+        return self
+
+    def __next__(self):
+        msg = self._decode_next_message()
+        if msg is None:
+            raise StopIteration()
+        return msg
 
     def get_all(self):
         return list(self)
@@ -31,6 +39,7 @@ class QRDecoder(object):
         return self._decode_message(mode)
 
     def _decode_message(self, mode):
+        # print('Mode:', mode)
         if mode == MODE_NUMBER:
             message = self._decode_numeric_message()
         elif mode == MODE_ALPHA_NUM:
@@ -43,6 +52,8 @@ class QRDecoder(object):
             raise NotImplementedError('Structured append encoding not implemented yet')
         elif mode == MODE_ECI:
             raise NotImplementedError('Extended Channel Interpretation encoding not implemented yet')
+        elif mode == MODE_ZERO:
+            message = None
         else:
             raise IllegalQrMessageModeId(mode)
         return message
@@ -74,6 +85,8 @@ class QRDecoder(object):
     def _decode_bytes_message(self):
         char_count = self.scanner.read_int(bits_for_length(self.version, MODE_BYTES))
         raw = ints_to_bytes(self.scanner.read_int(8) for _ in range(char_count))
+        if self._raw_in_bytes_mode:
+            return raw
         try:
             val = raw.decode('utf-8')
         except UnicodeDecodeError:

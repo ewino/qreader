@@ -3,7 +3,7 @@ from qreader.constants import MODE_SIZE_SMALL, MODE_SIZE_LARGE, ERROR_CORRECT_L,
     ERROR_CORRECT_H
 from qreader.constants import MODE_SIZE_MEDIUM
 from qreader.exceptions import QrFormatError, IllegalQrVersionError
-from qreader.utils import is_rect_overlapping
+from qreader.utils import is_rect_overlapping, bit_list_to_bytes, de_interleave_blocks, bytes_to_bit_list
 
 __author__ = 'ewino'
 
@@ -13,11 +13,11 @@ FORMAT_INFO_BCH_GENERATOR = 0b10100110111
 
 ALIGNMENT_POSITIONS = [
     [],
-    [6, 18],
-    [6, 22],
-    [6, 26],
-    [6, 30],
-    [6, 34],
+    [18],
+    [22],
+    [26],
+    [30],
+    [34],
     [6, 22, 38],
     [6, 24, 42],
     [6, 26, 46],
@@ -168,6 +168,10 @@ def get_dead_zones(version):
         (8, 6, size - 9, 6),  # top timing array
         (6, 8, 6, size - 9)  # left timing array
     ]
+    timing_arrays = [
+        (8, 6, size - 9, 6),  # top timing array
+        (6, 8, 6, size - 9)  # left timing array
+    ]
 
     if version >= 7:
         constant_zones.append((size - 11, 0, size - 9, 5))  # top version info
@@ -177,8 +181,122 @@ def get_dead_zones(version):
     alignment_centers = list(permutations(ALIGNMENT_POSITIONS[version - 1], 2))
     alignment_centers.extend((x, x) for x in ALIGNMENT_POSITIONS[version - 1])
 
+    # Alignment zones can and do overlap with timing pattern bits for large QR codes
+    disallowed_zones = [zone for zone in constant_zones if zone not in timing_arrays]
+
     for center_x, center_y in alignment_centers:
         alignment_zone = (center_x - 2, center_y - 2, center_x + 2, center_y + 2)
-        if all(not is_rect_overlapping(alignment_zone, dead_zone) for dead_zone in constant_zones):
+        if all(not is_rect_overlapping(alignment_zone, dead_zone) for dead_zone in disallowed_zones):
             alignments_zones.append(alignment_zone)
     return constant_zones + alignments_zones
+
+
+def reassemble_raw_data_blocks(raw_bit_data, version, ec_level):
+    """
+    Depending on the version and error correction level, the message is broken up into multiple blocks and interleaved
+    while encoding. So, after scanning the raw bits, we need to break up the blocks and de-interleave them before
+    decoding or attempting to correct errors.
+
+    :param raw_bit_data List of int-s representing the bits in the raw scanned data
+    :param version QR Code version
+    :param ec_level Error correction level
+    """
+    block_info = DATA_BLOCKS_INFO[version - 1][ec_level]
+    large_block_count = 0
+    try:
+        ec_size, data_size, normal_block_count = block_info
+    except ValueError:
+        ec_size, data_size, normal_block_count, large_block_count = block_info
+        # print(
+        #     'Have large blocks to process: version=%s | ec-level=%s | block_info=%s'%(
+        #         version, ec_level, block_info
+        #     )
+        # )
+
+    if (normal_block_count + large_block_count) == 1:
+        # Nothing to do
+        return raw_bit_data
+
+
+    ncodewords = (ec_size + data_size) * normal_block_count + (ec_size + data_size + 1) * large_block_count
+    n_codeword_bits = ncodewords * 8
+
+    # TODO Not sure what to do if there is more data than the spec
+    # TODO Should the extra data participate in the de-interleaving too?
+    # For now, truncate to capacity as per spec, while storing the extra data
+    extra_bits = raw_bit_data[n_codeword_bits:]
+    truncated_bit_data = raw_bit_data[:n_codeword_bits]
+
+    if extra_bits:
+        # We will add it to the re-assembled bytes in the endc
+        # print('Truncated', len(extra_bits) + n_codeword_bits, 'bits of raw data to', n_codeword_bits, 'bits')
+        ...
+
+    raw_byte_data = bit_list_to_bytes(truncated_bit_data, bits_in_a_byte=8)
+
+    if len(raw_byte_data) < ncodewords:
+        # TODO Not sure what to do if we get less data than the spec
+        # Possibly damaged QR - Will do a best effort decoding instead of simply failing
+        print(f'Expected {ncodewords} blocks for version={version}|ec-level={ec_level}|block-info={block_info} | Got only {len(raw_byte_data)} blocks')
+
+    # print(len(raw_byte_data))
+    # print(', '.join(str(hex(int(v))) for v in raw_byte_data))
+
+    n_data_blocks = data_size * normal_block_count + (data_size + 1) * large_block_count
+    n_ec_blocks = ec_size * (normal_block_count + large_block_count)
+
+    # print('Number of data blocks as per spec:', n_data_blocks)
+    # print('Number of EC blocks:', n_ec_blocks)
+
+    # First we have the data blocks
+    data_blocks = raw_byte_data[:n_data_blocks]
+
+    # The rest are the error correction blocks
+    ec_blocks = raw_byte_data[n_data_blocks:(n_data_blocks+n_ec_blocks)]
+
+    # print('Actual number of data blocks:', len(data_blocks))
+    # print('Actual number of EC blocks:', len(ec_blocks))
+
+    _blk_padding_obj = object()
+    if large_block_count:
+        data_blocks = pad_normal_data_blocks(data_blocks, normal_block_count, large_block_count, _blk_padding_obj)
+
+    d_data_blocks = de_interleave_blocks(data_blocks, normal_block_count+large_block_count)
+    d_ec_blocks = de_interleave_blocks(ec_blocks, normal_block_count+large_block_count)
+
+    if large_block_count:
+        d_data_blocks = remove_padding(d_data_blocks, _blk_padding_obj)
+
+    reassembled_bytes = d_data_blocks + d_ec_blocks
+
+    reassembled_bits = bytes_to_bit_list(reassembled_bytes, bits_in_a_byte=8)
+
+    if extra_bits:
+        # Add the extra bits data back
+        reassembled_bits += extra_bits
+
+
+    if len(reassembled_bits) != len(raw_bit_data):
+        raise Exception('Something wrong - output bits %s != input bits %s'%(
+                len(reassembled_bits), len(raw_bit_data)
+        ))
+
+    return reassembled_bits
+
+
+def pad_normal_data_blocks(data_blocks, normal_block_count, large_block_count, pad_with_obj):
+    data_blocks_copy = list(data_blocks)
+
+    overshooting_large_block_items = data_blocks_copy[-large_block_count:]
+    data_blocks_copy = data_blocks_copy[:-large_block_count]
+
+    data_blocks_copy += [pad_with_obj] * normal_block_count
+    data_blocks_copy += overshooting_large_block_items
+
+    return data_blocks_copy
+
+
+def remove_padding(blocks, padding_obj):
+    unpadded_blocks = [blk for blk in blocks if blk != padding_obj]
+    return unpadded_blocks
+
