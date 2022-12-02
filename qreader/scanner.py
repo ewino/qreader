@@ -1,4 +1,7 @@
-from collections import Iterator
+try:
+    from collections import Iterator
+except:
+    from collections.abc import Iterator
 
 from qreader import tuples
 from qreader.exceptions import QrImageRecognitionException
